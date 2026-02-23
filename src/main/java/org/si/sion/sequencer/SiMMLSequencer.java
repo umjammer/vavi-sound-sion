@@ -54,9 +54,9 @@ public class SiMMLSequencer extends MMLSequencer {
 
     private final SiMMLTable _table;  // table instance
 
-    private Function<SiMMLTrack, Boolean> _callbackEventNoteOn = null;   // callback function for event trigger "note on"
-    private Function<SiMMLTrack, Boolean> _callbackEventNoteOff = null;  // callback function for event trigger "note off"
-    private BiConsumer<Integer, Boolean> _callbackTempoChanged = null;  // callback function for tempo change event
+    private Function<SiMMLTrack, Boolean> _callbackEventNoteOn;   // callback function for event trigger "note on"
+    private Function<SiMMLTrack, Boolean> _callbackEventNoteOff;  // callback function for event trigger "note off"
+    private BiConsumer<Integer, Boolean> _callbackTempoChanged;  // callback function for tempo change event
     private Runnable _callbackTimer = null;         // callback function for timer interruption
     private BiConsumer<Integer, Integer> _callbackBeat = null;          // callback function for beat event
     private BiPredicate<SiMMLData, Object> _callbackParseSysCmd = null;   // callback function for parsing system command
@@ -533,7 +533,7 @@ public class SiMMLSequencer extends MMLSequencer {
         int codeH = '-';
         Pattern comrex = Pattern.compile("/\\*.*?\\*/|//.*?[\\r\\n]+");
         Pattern reprex = Pattern.compile("!\\[(\\d*)(.*?)(!\\|(.*?))?!\\\\](\\d*)");
-        Pattern seqrex = Pattern.compile("[ \\t\\r\\n]*(#([A-Z@\\-]+)(\\+=|=)?)?([^;{]*({.*?})?[^;]*);"); //}
+        Pattern seqrex = Pattern.compile("[ \\t\\r\\n]*(#([A-Z@\\-]+)(\\+=|=)?)?([^;{]*(\\{.*?})?[^;]*);"); //}
         Pattern midrex = Pattern.compile("([A-Z])?(-([A-Z])?)?");
         StringBuilder expmml;
         Matcher res;
