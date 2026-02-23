@@ -36,10 +36,10 @@ class MDXExecutor {
     boolean fineVolumeFlag;
     boolean isPCM8;
 
-    private int[] _panTable = {4, 0, 8, 4};
-    private int[] _freqTable = {26, 31, 38, 43, 50};
-    private int[] _volTable = {85, 87, 90, 93, 95, 98, 101, 103, 106, 109, 111, 114, 117, 119, 122, 125};
-    private int[] _volTablePCM8 = {2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64, 80};
+    private final int[] _panTable = {4, 0, 8, 4};
+    private final int[] _freqTable = {26, 31, 38, 43, 50};
+    private final int[] _volTable = {85, 87, 90, 93, 95, 98, 101, 103, 106, 109, 111, 114, 117, 119, 122, 125};
+    private final int[] _volTablePCM8 = {2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64, 80};
     private int[] _tlTable;
 
     private int eventIDFadeOut;
@@ -223,7 +223,7 @@ class MDXExecutor {
                         break;
                     case MDXEvent.REPEAT_END:
                         me = mmlseq.appendNewEvent(MMLEvent.REPEAT_END, 0, 0);
-                        me.jump = repeatStac.remove(0);;
+                        me.jump = repeatStac.remove(0);
                         me.jump.jump = me;
                         break;
                     case MDXEvent.DETUNE:

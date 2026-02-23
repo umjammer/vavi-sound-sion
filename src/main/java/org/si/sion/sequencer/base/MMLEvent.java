@@ -90,7 +90,7 @@ public class MMLEvent {
 
     /** Format as "#id; data" */
     public String toString() {
-        return "#" + String.valueOf(id) + "; " + String.valueOf(data);
+        return "#" + id + "; " + data;
     }
 
     /**

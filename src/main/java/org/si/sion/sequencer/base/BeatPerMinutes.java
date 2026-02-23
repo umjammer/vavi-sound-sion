@@ -22,7 +22,7 @@ public class BeatPerMinutes {
     // sample rate
     private int _sampleRate = 0;
     // tick resolution
-    private int _resolution;
+    private final int _resolution;
 
     /** beat per minute. */
     public double getBpm() {

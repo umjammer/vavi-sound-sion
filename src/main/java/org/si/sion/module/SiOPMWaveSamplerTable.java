@@ -19,7 +19,7 @@ public class SiOPMWaveSamplerTable extends SiOPMWaveBase {
     public SiOPMWaveSamplerTable stencil;
 
     // SiOPMWaveSamplerData table to refer from sampler channel.
-    private SiOPMWaveSamplerData[] _table;
+    private final SiOPMWaveSamplerData[] _table;
 
     // constructor
     //

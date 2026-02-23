@@ -40,10 +40,10 @@ public class MDXTrack {
 
     /** to string. */
     public String toString() {
-        String text = "";
+        StringBuilder text = new StringBuilder();
         int i, imax = sequence.size();
-        for (i = 0; i < imax; i++) text += sequence.get(i) + "\n";
-        return text;
+        for (i = 0; i < imax; i++) text.append(sequence.get(i)).append("\n");
+        return text.toString();
     }
 
     // constructor
@@ -51,7 +51,7 @@ public class MDXTrack {
     public MDXTrack(MDXData owner, int channelNumber) {
         this.owner = owner;
         this.channelNumber = channelNumber;
-        sequence = new ArrayList<MDXEvent>();
+        sequence = new ArrayList<>();
         segnoPointer = null;
     }
 

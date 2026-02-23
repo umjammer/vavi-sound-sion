@@ -69,7 +69,7 @@ public class SiMMLSimulatorBase {
         this.type = type;
         this._isSuitableForFMVoice = isSuitableForFMVoice;
         this._defaultOpeCount = 1;
-        this._channelVoiceSet = new ArrayList<SiMMLSimulatorVoiceSet>(channelCount);
+        this._channelVoiceSet = new ArrayList<>(channelCount);
         this._defaultVoiceSet = defaultVoiceSet;
     }
 

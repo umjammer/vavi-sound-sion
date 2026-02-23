@@ -9,7 +9,6 @@ package org.si.sound.patterns;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.si.sion.SiONData;
 import org.si.sion.SiONDriver;
@@ -36,7 +35,7 @@ public class Sequencer {
     public Consumer<Sequencer> onEnterFrame = null;
     /** callback after every notes. function(Sequencer) : void */
     public Consumer<Sequencer> onExitFrame = null;
-    /** callback on first beat of every segments. function(Sequencer) : void */
+    /** callback on first beat of every segment. function(Sequencer) : void */
     public Consumer<Sequencer> onEnterSegment = null;
     /** Frame count in one segment */
     public int segmentFrameCount;
@@ -201,7 +200,7 @@ public class Sequencer {
 
     /** Frame division of 1 measure. Set 16 to play notes in 16th beats. */
     public int getDivision() {
-        int step = (int) (1920 / segmentFrameCount);
+        int step = 1920 / segmentFrameCount;
         return (step == gridStep) ? segmentFrameCount : 0;
     }
 
@@ -259,7 +258,7 @@ public class Sequencer {
         _sequencePointer = _initialSequencePointer;
         _frameCounter = (_initialSequencePointer == -1) ? -1 : (_initialSequencePointer % segmentFrameCount);
         _currentGridShift = 0;
-        if (pattern != null && pattern.size() > 0) _currentNote = pattern.get(0);
+        if (pattern != null && !pattern.isEmpty()) _currentNote = pattern.get(0);
         return track;
     }
 

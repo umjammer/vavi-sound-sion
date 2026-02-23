@@ -12,8 +12,6 @@ import java.util.function.Function;
 import org.si.utils.ByteArray;
 import vavi.media.Sound;
 
-import static org.si.utils.ByteArray.LITTLE_ENDIAN;
-
 
 /**
  * Refer from http://www.flashcodersbrighton.org/wordpress/?p=9
@@ -114,7 +112,7 @@ public final class SoundClass {
     }
 
     void _write(int[] vu, ByteArray bytes) {
-        for (int i = 0; i < vu.length; i++) bytes.writeUnsignedInt(vu[i]);
+        for (int j : vu) bytes.writeUnsignedInt(j);
     }
 
     /**

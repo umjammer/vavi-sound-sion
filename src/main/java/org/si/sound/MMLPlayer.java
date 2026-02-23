@@ -165,7 +165,7 @@ public class MMLPlayer extends SoundObject {
         _data = new SiONData();
         this._mml = mml;
         _controlTrackNumber = 0;
-        _trackMute = new ArrayList<Boolean>();
+        _trackMute = new ArrayList<>();
     }
 
     // operations

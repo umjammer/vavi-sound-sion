@@ -44,7 +44,7 @@ public class BassSequencer extends PatternSequencer {
     protected Note[] _currentPattern;
     /** Next length sequence pattern to change while playing. */
     protected Note[] _nextPattern;
-    /** pettern number. */
+    /** pattern number. */
     protected int _patternNumber;
     /** Change bass line pattern at the head of segment. */
     protected boolean _changePatternOnSegment;
@@ -140,7 +140,7 @@ public class BassSequencer extends PatternSequencer {
     /**
      * constructor
      *
-     * @param chord                  Bassline scale or chord or chord name.
+     * @param chord                  Bassline "scale" or "chord" or "chord name".
      * @param patternNumber          bass line pattern number
      * @param changePatternOnSegment When this instanceof true, pattern and chord are changed at the head of next segment.
      * @see org.si.sion.utils.Scale

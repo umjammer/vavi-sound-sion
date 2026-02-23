@@ -143,7 +143,7 @@ public class Arpeggiator extends PatternSequencer {
 
         _nextPattern = null;
         _sequencer.setDefaultLength(1);
-        _sequencer.pattern = new ArrayList<Note>();
+        _sequencer.pattern = new ArrayList<>();
         _sequencer.onEnterFrame = this::_onEnterFrame;
         _sequencer.onEnterSegment = this::_onEnterSegment;
 

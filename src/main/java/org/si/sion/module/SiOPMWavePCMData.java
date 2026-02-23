@@ -6,8 +6,6 @@
 
 package org.si.sion.module;
 
-import java.util.List;
-
 import org.si.sion.sequencer.SiMMLTable;
 import org.si.sion.utils.SiONUtil;
 import vavi.media.Sound;

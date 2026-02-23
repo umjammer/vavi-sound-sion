@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.si.sion.sequencer.base.MMLSequence;
-import org.si.sion.sequencer.base.MMLSequencer;
-
 
 public class CPU {
 

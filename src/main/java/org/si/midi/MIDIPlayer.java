@@ -14,7 +14,6 @@ import org.si.sion.SiONDriver;
 import org.si.sion.events.SiONEvent;
 import org.si.sion.midi.SMFData;
 import org.si.utils.Event;
-import org.si.utils.EventListener;
 import vavi.net.URLRequest;
 
 
@@ -24,7 +23,7 @@ public class MIDIPlayer {
     // variables
     //
 
-    static private Map<String, SMFData> _cache = new HashMap<>(); // * = {}
+    static private final Map<String, SMFData> _cache = new HashMap<>(); // * = {}
     static private SiONDriver _driver = null;
     static private SMFData _nextData = null;
     static private boolean _fadeOut = false;
@@ -192,7 +191,7 @@ public class MIDIPlayer {
             _isPlaying = true;
             SiONDriver sionDriver = getDriver();
             if (sionDriver != null)
-                sionDriver.addEventListener(SiONEvent.FINISH_SEQUENCE, (EventListener) evt -> _onFinishSequence(evt));
+                sionDriver.addEventListener(SiONEvent.FINISH_SEQUENCE, MIDIPlayer::_onFinishSequence);
             getDriver().play(smfData, true);
             getDriver().fadeIn(fadeInTime);
         }
@@ -203,7 +202,7 @@ public class MIDIPlayer {
     }
 
     static private void _pauseWithFadeOut(SiONEvent e) {
-        getDriver().removeEventListener(SiONEvent.FADE_OUT_COMPLETE, (EventListener) evt -> MIDIPlayer._pauseWithFadeOut((SiONEvent) evt));
+        getDriver().removeEventListener(SiONEvent.FADE_OUT_COMPLETE, evt -> MIDIPlayer._pauseWithFadeOut((SiONEvent) evt));
         getDriver().pause();
     }
 
@@ -216,7 +215,7 @@ public class MIDIPlayer {
     static private void _playNextData(SiONEvent e) {
         getDriver().removeEventListener(SiONEvent.STREAM_STOP, evt -> MIDIPlayer._playNextData((SiONEvent) evt));
         if (_nextData.isAvailable()) _play(_nextData, 0);
-        else _nextData.addEventListener(Event.COMPLETE, evt -> MIDIPlayer._waitAndPlay(evt));
+        else _nextData.addEventListener(Event.COMPLETE, MIDIPlayer::_waitAndPlay);
         _nextData = null;
     }
 
@@ -224,7 +223,7 @@ public class MIDIPlayer {
         _isPlaying = false;
         SiONDriver sionDriver = getDriver();
         if (sionDriver != null)
-            sionDriver.removeEventListener(SiONEvent.FINISH_SEQUENCE, (EventListener) evt -> _onFinishSequence(evt));
+            sionDriver.removeEventListener(SiONEvent.FINISH_SEQUENCE, MIDIPlayer::_onFinishSequence);
         SMFData smfData = getSmfData();
         if (smfData != null && onFinishSequence != null) {
             onFinishSequence.accept(getSmfData());

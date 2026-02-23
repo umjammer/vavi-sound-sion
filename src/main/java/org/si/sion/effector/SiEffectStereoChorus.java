@@ -14,7 +14,8 @@ public class SiEffectStereoChorus extends SiEffectBase {
     private static final int DELAY_BUFFER_BITS = 12;
     private static final int DELAY_BUFFER_FILTER = (1 << DELAY_BUFFER_BITS) - 1;
 
-    private double[] _delayBufferL, _delayBufferR;
+    private final double[] _delayBufferL;
+    private final double[] _delayBufferR;
     private int _pointerRead;
     private int _pointerWrite;
     private double _feedback;

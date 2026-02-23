@@ -17,10 +17,10 @@ public class MMLSequenceGroup {
     //
 
     // terminator
-    private MMLSequence _term;
+    private final MMLSequence _term;
 
     // owner data
-    private MMLData _owner;
+    private final MMLData _owner;
 
     // properties
     //
@@ -57,7 +57,7 @@ public class MMLSequenceGroup {
     //
     public MMLSequenceGroup(MMLData owner) {
         _owner = owner;
-        _sequences = new ArrayList<MMLSequence>();
+        _sequences = new ArrayList<>();
         _term = new MMLSequence(true);
     }
 
@@ -65,7 +65,7 @@ public class MMLSequenceGroup {
     //
 
     /**
-     * Create new sequence group. Why its not create() ???
+     * Create new sequence group. Why it's not create() ???
      *
      * @param headEvent MMLEvnet returned from MMLParser.parse().
      */
@@ -107,9 +107,9 @@ public class MMLSequenceGroup {
     //
 
     // allocated sequences
-    private List<MMLSequence> _sequences;
+    private final List<MMLSequence> _sequences;
     // free list
-    private List<MMLSequence> _freeList = new ArrayList<>();
+    private final List<MMLSequence> _freeList = new ArrayList<>();
 
     /** append new sequence */
     public MMLSequence appendNewSequence() {

@@ -17,7 +17,6 @@ import java.util.Vector;
 import org.si.utils.ByteArray;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
-import org.si.utils.EventListener;
 import vavi.net.URLLoader;
 import vavi.net.URLLoaderDataFormat;
 import vavi.net.URLRequest;
@@ -113,10 +112,10 @@ public class SMFData extends EventDispatcher {
         ByteArray byteArray = new ByteArray();
         _urlLoader = new URLLoader();
         _urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
-        _urlLoader.addEventListener(Event.COMPLETE, (EventListener) this::_onComplete);
-        _urlLoader.addEventListener("progress", (EventListener) this::_onProgress);
-        _urlLoader.addEventListener("ioError", (EventListener) this::_onError);
-        _urlLoader.addEventListener("securityError", (EventListener) this::_onError);
+        _urlLoader.addEventListener(Event.COMPLETE, this::_onComplete);
+        _urlLoader.addEventListener("progress", this::_onProgress);
+        _urlLoader.addEventListener("ioError", this::_onError);
+        _urlLoader.addEventListener("securityError", this::_onError);
         _urlLoader.load(url);
     }
 
@@ -173,7 +172,7 @@ public class SMFData extends EventDispatcher {
     //
 
     private void _onProgress(Object e) {
-        dispatchEvent((Event) ((Event) e).clone());
+        dispatchEvent(((Event) e).clone());
     }
 
     private void _onComplete(Object e) {
@@ -189,7 +188,7 @@ public class SMFData extends EventDispatcher {
 
     private void _onError(Object e) {
         _removeAllListeners();
-        dispatchEvent((Event) ((Event) e).clone());
+        dispatchEvent(((Event) e).clone());
     }
 
     private void _removeAllListeners() {

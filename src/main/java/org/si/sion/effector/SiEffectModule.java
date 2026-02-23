@@ -23,13 +23,13 @@ public class SiEffectModule {
 
     // variables
     //
-    private SiOPMModule _module;
-    private List<SiEffectStream> _freeEffectStreams;
-    private List<SiEffectStream> _localEffects;
-    private SiEffectStream[] _globalEffects;
-    private SiEffectStream _masterEffect;
+    private final SiOPMModule _module;
+    private final List<SiEffectStream> _freeEffectStreams;
+    private final List<SiEffectStream> _localEffects;
+    private final SiEffectStream[] _globalEffects;
+    private final SiEffectStream _masterEffect;
     private int _globalEffectCount;
-    private static Map<String, EffectorInstances> _effectorInstances = new HashMap<>();
+    private static final Map<String, EffectorInstances> _effectorInstances = new HashMap<>();
 
     // properties
     //

@@ -252,7 +252,7 @@ public class AnalogSynth extends BasicSynth {
     //
 
     /**
-     * set VCA envelope. This provide basic ADSR envelop.
+     * set VCA envelope. This provides basic ADSR envelop.
      *
      * @param attackTime   attack time [0-1]. This value instanceof not linear.
      * @param decayTime    decay time [0-1]. This value instanceof not linear.

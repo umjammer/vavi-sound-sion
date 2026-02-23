@@ -337,17 +337,11 @@ public class DrumMachine extends MultiTrackSoundObject {
             } else {
                 tn = (_tracks.get(1).getTrackNumber() < _tracks.get(2).getTrackNumber()) ? 1 : 2;
             }
-            switch (tn) {
-                case 0:
-                    seq = _bass;
-                    break;
-                case 1:
-                    seq = _snare;
-                    break;
-                default:
-                    seq = _hihat;
-                    break;
-            }
+            seq = switch (tn) {
+                case 0 -> _bass;
+                case 1 -> _snare;
+                default -> _hihat;
+            };
             seq.onEnterFrame = this::_onEnterFrame;
             seq.onEnterSegment = this::_onEnterSegment;
         } else {

@@ -103,7 +103,7 @@ public class EffectChain {
 
     // factory
     //
-    private static List<EffectChain> _freeList = new ArrayList<>();
+    private static final List<EffectChain> _freeList = new ArrayList<>();
 
     /** allocate new EffectChain */
     public static EffectChain alloc(SiEffectBase[] effectList) {

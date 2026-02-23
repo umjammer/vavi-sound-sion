@@ -143,9 +143,9 @@ public class SiONMIDIEvent extends SiONTrackEvent {
     //
 
     // 2nd value
-    private int _2ndValue;
+    private final int _2ndValue;
     // midi channel
-    private MIDIModuleChannel _midiChannel;
+    private final MIDIModuleChannel _midiChannel;
 
     // properties
     //

@@ -6,7 +6,6 @@
 
 package org.si.sion.module;
 
-import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import vavi.media.Sound;
 

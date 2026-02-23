@@ -18,7 +18,7 @@ public class PresetVoiceLoader extends VoiceReference {
     //
 
     /** current category's list */
-    protected List<SiONVoice> _voiceList = null;
+    protected List<SiONVoice> _voiceList;
     /** current voice number */
     protected int _voiceNumber = 0;
 

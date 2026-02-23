@@ -146,7 +146,7 @@ public class SoundObjectContainer extends SoundObject {
     /** constructor. */
     SoundObjectContainer(String name) {
         super(name, null);
-        _soundList = new ArrayList<SoundObject>();
+        _soundList = new ArrayList<>();
         _thisVolume = 1;
         _isPlaying = false;
     }
@@ -287,7 +287,7 @@ public class SoundObjectContainer extends SoundObject {
      * If more than one child sound object has the specified name, the method returns the first object in the child list.
      *
      * @param name The child name of the SoundObject to find.
-     * @return founded SoundObject instance. Returns null if its not found.
+     * @return founded SoundObject instance. Returns null if it's not found.
      */
     public SoundObject getChildByName(String name) {
         for (SoundObject sound : _soundList) {
@@ -300,7 +300,7 @@ public class SoundObjectContainer extends SoundObject {
      * Returns the index position of a child SoundObject instance.
      *
      * @param sound The SoundObject instance want to know.
-     * @return index of specifyed SoundObject. Returns -1 if its not found.
+     * @return index of specifyed SoundObject. Returns -1 if it's not found.
      */
     public double getChildIndex(SoundObject sound) {
         return _soundList.indexOf(sound);

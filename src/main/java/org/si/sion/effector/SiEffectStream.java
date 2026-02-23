@@ -20,7 +20,7 @@ public class SiEffectStream {
     //
 
     /** effector chain */
-    public List<SiEffectBase> chain = new ArrayList<SiEffectBase>();
+    public List<SiEffectBase> chain = new ArrayList<>();
 
     /** @private [internal] streaming buffer */
     SiOPMStream _stream;
@@ -28,15 +28,15 @@ public class SiEffectStream {
     int _depth;
 
     // module
-    private SiOPMModule _module;
+    private final SiOPMModule _module;
     // panning
     private int _pan;
     // has effect send
     private boolean _hasEffectSend;
     // streaming level
-    private double[] _volumes = new double[SiOPMModule.STREAM_SEND_SIZE];
+    private final double[] _volumes = new double[SiOPMModule.STREAM_SEND_SIZE];
     // output streams
-    private SiOPMStream[] _outputStreams = new SiOPMStream[SiOPMModule.STREAM_SEND_SIZE];
+    private final SiOPMStream[] _outputStreams = new SiOPMStream[SiOPMModule.STREAM_SEND_SIZE];
 
     // properties
     //
@@ -145,7 +145,7 @@ public class SiEffectStream {
         _stream.clear();
     }
 
-    /** free all of effector chain, called when effector module instanceof initialized */
+    /** free all effector chain, called when effector module instanceof initialized */
     public void free() {
         for (SiEffectBase e : chain) e._isFree = true;
         chain.clear();
@@ -229,7 +229,7 @@ public class SiEffectStream {
             // SiEffectBase e = SiEffectModule.getInstance(cmd); // FIXME: getInstance is not static
             SiEffectBase e = null; // Temporary fix to allow compilation
             if (e != null) {
-                List<Double> argsList = new ArrayList<Double>();
+                List<Double> argsList = new ArrayList<>();
                 for (int j = 0; j < argc[0]; j++) argsList.add(args[j]);
                 e.mmlCallback(argsList.stream().mapToDouble(aDouble -> aDouble).toArray());
                 chain.add(e);

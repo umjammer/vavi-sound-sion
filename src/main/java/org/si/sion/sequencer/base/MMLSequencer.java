@@ -65,10 +65,10 @@ public class MMLSequencer {
 
 
     private int _newUserDefinedEventID = MMLEvent.USER_DEFINE;  // id value of new user-defined event.
-    private java.util.Map<String, Integer> _userDefinedEventID = new java.util.HashMap<>();                    // id map of user-defined event letter set by newMMLEventListener().
+    private final java.util.Map<String, Integer> _userDefinedEventID = new java.util.HashMap<>();                    // id map of user-defined event letter set by newMMLEventListener().
     Object[] _eventCommandLetter = new Object[MMLEvent.COMMAND_MAX];              // event commands
-    private Function<MMLEvent, MMLEvent>[] _eventHandlers = new Function[MMLEvent.COMMAND_MAX]; // list of event handler functions set by setMMLEventListener().
-    private boolean[] _eventGlobalFlags = new boolean[MMLEvent.COMMAND_MAX]; // global event flag
+    private final Function<MMLEvent, MMLEvent>[] _eventHandlers = new Function[MMLEvent.COMMAND_MAX]; // list of event handler functions set by setMMLEventListener().
+    private final boolean[] _eventGlobalFlags = new boolean[MMLEvent.COMMAND_MAX]; // global event flag
 
     private int _processSampleCount;        // leftover of buffer sample count in processing
     private int _globalBufferSampleCount;   // leftover of buffer sample count in global sequence
@@ -120,7 +120,7 @@ public class MMLSequencer {
         _changeableBPM = new BeatPerMinutes(120, 44100, 1920);
         _bpm = _changeableBPM;
         globalExecutor = new MMLExecutor();
-        mmlParser._getCommandLetters((Object[])_eventCommandLetter);
+        mmlParser._getCommandLetters(_eventCommandLetter);
 
         // 3 : callback every 4 beat
         _onBeatCallbackFilter = 3;
@@ -280,7 +280,7 @@ public class MMLSequencer {
      */
     public void _process() {
         // DO NOTHING !!
-        // You dont have to call this in your overrided function.
+        // You don't have to call this in your overrided function.
     }
 
     /** Set global sequence. This function must be called after prepareProcess() and before process(). */

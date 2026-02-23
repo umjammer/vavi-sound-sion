@@ -29,7 +29,7 @@ public class SiOPMChannelKS extends SiOPMChannelFM {
 
     // variables
     //
-    private int[] _ks_delayBuffer;   // delay buffer
+    private final int[] _ks_delayBuffer;   // delay buffer
     private double _ks_delayBufferIndex;    // delay buffer index
     private int _ks_pitchIndex;             // pitch index
     private double _ks_decay_lpf;           // lpf decay
@@ -51,7 +51,7 @@ public class SiOPMChannelKS extends SiOPMChannelFM {
     /** Output parameters. */
     public String toString() {
         String str = "SiOPMChannelKS : operatorCount=";
-        str += String.valueOf(_operatorCount) + "\n";
+        str += _operatorCount + "\n";
         $("fb ", _inputLevel - 6);
         $2("vol", _volumes[0], "pan", _pan - 64);
         if (operator[0] != null) str += operator[0] + "\n";

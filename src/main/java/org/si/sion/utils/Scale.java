@@ -115,7 +115,7 @@ public class Scale {
     protected List<Integer> _tensionNotes;
     /** scale name */
     protected String _scaleName;
-    /** default center octave, this apply when there are no octave specification. */
+    /** default center octave, this applies when there are no octave specification. */
     protected int _defaultCenterOctave;
 
 
@@ -127,7 +127,7 @@ public class Scale {
      * The regular expression of name is /(o[0-9])?([A-Ga-g])([+#\-])?([a-z0-9]+)?/.<br/>
      * The 1st letter means center octave. default octave = 5 (when omit).<br/>
      * The 2nd letter means root note.<br/>
-     * The 3nd letter (option) means note shift sign. "+" and "#" shift +1, "-" shifts -1.<br/>
+     * The 3rd letter (option) means note shift sign. "+" and "#" shift +1, "-" shifts -1.<br/>
      * The 4th letters (option) means ((follows) scale).<br/>
      * <table>
      * <tr><th>the 3rd letters</th><th>scale</th></tr>
@@ -202,12 +202,12 @@ public class Scale {
 
     /** center octave */
     public int getCenterOctave() {
-        return (int) (_scaleNotes.get(0) / 12);
+        return _scaleNotes.get(0) / 12;
     }
 
     public void setCenterOctave(int oct) {
         _defaultCenterOctave = oct;
-        int prevoct = (int) (_scaleNotes.get(0) / 12);
+        int prevoct = _scaleNotes.get(0) / 12;
         if (prevoct == oct) return;
         int i, offset = (oct - prevoct) * 12;
         for (i = 0; i < _scaleNotes.size(); i++) _scaleNotes.set(i, _scaleNotes.get(i) + offset);
@@ -320,7 +320,7 @@ public class Scale {
     public int getNote(int index) {
         int imax = _scaleNotes.size(), octaveShift = 0;
         if (index < 0) {
-            octaveShift = (int) ((index - imax + 1) / imax);
+            octaveShift = (index - imax + 1) / imax;
             index -= octaveShift * imax;
             return _scaleNotes.get(index) + octaveShift * 12;
         }
@@ -334,7 +334,7 @@ public class Scale {
             return _tensionNotes.get(index);
         }
 
-        octaveShift = (int) (index / imax);
+        octaveShift = index / imax;
         index -= octaveShift * imax;
         return _tensionNotes.get(index) + octaveShift * 12;
     }

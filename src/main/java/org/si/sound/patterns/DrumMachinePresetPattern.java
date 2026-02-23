@@ -126,7 +126,7 @@ public class DrumMachinePresetPattern {
     // internals
     //
     // set pattern
-    private PMLParser _pp = new PMLParser(Map.of(
+    private final PMLParser _pp = new PMLParser(Map.of(
             "0", new Note(-1, -1, Double.NaN, 0, Double.NaN, null),
             "1", new Note(-1, -1, Double.NaN, 1, Double.NaN, null)
     ));

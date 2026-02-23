@@ -350,7 +350,7 @@ public class SiMMLTable {
     }
 
     private List<SiMMLVoice> _setupYM2413DefaultVoices(int[] registerMap) {
-        List<SiMMLVoice> voices = new ArrayList<SiMMLVoice>(registerMap.length >> 1);
+        List<SiMMLVoice> voices = new ArrayList<>(registerMap.length >> 1);
         int i, i2;
         for (i = i2 = 0; i < registerMap.length / 2; i++, i2 += 2) {
             voices.add(_dumpYM2413Register(new SiMMLVoice(), registerMap[i2], registerMap[i2 + 1]));

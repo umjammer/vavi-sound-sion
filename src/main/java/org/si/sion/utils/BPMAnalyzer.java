@@ -21,8 +21,8 @@ public class BPMAnalyzer {
     private int _bpm;
     private double _bpmProbability;
     private int _pickedupCount;
-    private int[] _pickedupBPMList = new int[10];
-    private double[] _pickedupBPMProbabilityList = new double[10];
+    private final int[] _pickedupBPMList = new int[10];
+    private final double[] _pickedupBPMProbabilityList = new double[10];
     private int _snapShotIndex;
 
     // properties
@@ -103,7 +103,7 @@ public class BPMAnalyzer {
         for (pickupIndex = pickupStep, i = 0; i < _pickedupCount; i++, pickupIndex += 176400 + pickupStep) {
             _estimateBPMFromSamples(SiONUtil.extract(sound, null, 1, 176400, pickupIndex), 1);
             probs[i] = _bpmProbability;
-            bpms[i] = (int) (_bpm);
+            bpms[i] = _bpm;
             if (maxProb < _bpmProbability) {
                 maxProb = (int) _bpmProbability;
                 _snapShotIndex = pickupIndex;

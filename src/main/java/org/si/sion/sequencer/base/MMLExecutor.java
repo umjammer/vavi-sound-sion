@@ -25,13 +25,13 @@ public class MMLExecutor {
     // Repeating point
     private MMLEvent _repeatPoint;
     // event to process
-    private MMLEvent _processEvent;
+    private final MMLEvent _processEvent;
     // pitchbend event
-    private MMLEvent _bendFrom;
+    private final MMLEvent _bendFrom;
     // pitchbend event
-    private MMLEvent _bendEvent;
+    private final MMLEvent _bendEvent;
     // note event
-    private MMLEvent _noteEvent;
+    private final MMLEvent _noteEvent;
 
     /** current position in tick count. */
     int _currentTickCount;

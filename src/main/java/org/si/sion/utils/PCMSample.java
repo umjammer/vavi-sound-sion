@@ -601,7 +601,7 @@ public class PCMSample {
 
     // convert wave to vector
     @SuppressWarnings({"rowtypes", "unchecked"})
-    private BiConsumer<ByteArray, double[]>[] _w2vfunctions = List.of(
+    private final BiConsumer<ByteArray, double[]>[] _w2vfunctions = List.of(
             this::_w2v8,
             this::_w2v16,
             this::_w2v24,
@@ -648,7 +648,8 @@ public class PCMSample {
     }
 
     // convert vector tp wave
-    private BiConsumer<double[], ByteArray>[] _v2wfunctions = List.of(
+    @SuppressWarnings("unchecked")
+    private final BiConsumer<double[], ByteArray>[] _v2wfunctions = List.of(
             this::_v2w8,
             this::_v2w16,
             this::_v2w24,
@@ -657,18 +658,18 @@ public class PCMSample {
 
     private void _v2w8(double[] src, ByteArray wav) {
         double qn = (1 << (_waveDataBitRate - 1)) - 1, imax = src.length;
-        for (int i = 0; i < imax; i++) wav.writeByte((int) (src[i] * qn + 128));
+        for (double v : src) wav.writeByte((int) (v * qn + 128));
     }
 
     private void _v2w16(double[] src, ByteArray wav) {
         double qn = (1 << (_waveDataBitRate - 1)) - 1, imax = src.length;
-        for (int i = 0; i < imax; i++) wav.writeShort((short) (src[i] * qn));
+        for (double v : src) wav.writeShort((short) (v * qn));
     }
 
     private void _v2w24(double[] src, ByteArray wav) {
         double n, qn = (1 << (_waveDataBitRate - 1)) - 1, imax = src.length;
-        for (int i = 0; i < imax; i++) {
-            n = src[i] * qn;
+        for (double v : src) {
+            n = v * qn;
             wav.writeByte((int) n);
             wav.writeShort((int) n >> 8);
         }
@@ -676,6 +677,6 @@ public class PCMSample {
 
     private void _v2w32(double[] src, ByteArray wav) {
         double qn = (1 << (_waveDataBitRate - 1)) - 1, imax = src.length;
-        for (int i = 0; i < imax; i++) wav.writeInt((int) (src[i] * qn));
+        for (double v : src) wav.writeInt((int) (v * qn));
     }
 }

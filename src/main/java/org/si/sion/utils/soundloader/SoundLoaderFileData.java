@@ -222,8 +222,7 @@ public class SoundLoaderFileData extends EventDispatcher {
     }
 
     private void _onProgress(Event e) {
-        if (e instanceof ProgressEvent) {
-            ProgressEvent pe = (ProgressEvent) e;
+        if (e instanceof ProgressEvent pe) {
             dispatchEvent(pe.clone());
             _soundLoader._onProgress(this, pe.bytesLoaded - _bytesLoaded, pe.bytesTotal - _bytesTotal);
             _bytesLoaded = pe.bytesLoaded;
@@ -277,7 +276,7 @@ public class SoundLoaderFileData extends EventDispatcher {
                 _soundLoader._onComplete(this);
                 break;
             case "ssfpng":
-                _convertBitmapDataToSoundFont(((BitmapData) ((Bitmap) _loader.content).bitmapData));
+                _convertBitmapDataToSoundFont(((Bitmap) _loader.content).bitmapData);
                 break;
 
             // for ordinary purpose

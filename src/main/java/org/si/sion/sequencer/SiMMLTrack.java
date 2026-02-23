@@ -46,7 +46,7 @@ public class SiMMLTrack {
     public static final int DRIVER_NOTE = 0x30000;
     /** Track Type ID for tracks created by SiONDriver.sequenceOn() */
     public static final int DRIVER_SEQUENCE = 0x40000;
-    /** Track Type ID for SiONDriver's background sound tracks */
+    /** Track Type ID for SiONDriver's background soundtracks */
     public static final int DRIVER_BACKGROUND = 0x50000;
     /** Track Type ID for user controlled tracks */
     public static final int USER_CONTROLLED = 0x60000;
@@ -113,7 +113,7 @@ public class SiMMLTrack {
 
     // internal use
     private SiMMLData _mmlData;     // mml data. To get bpm from sequenceOn()s track, or only for reference in other cases.
-    private SiMMLTable _table;      // table
+    private final SiMMLTable _table;      // table
     private int _keyOnCounter;      // key on counter
     private int _keyOnLength;       // key on length
     private boolean _flagNoKeyOn;   // key on flag
@@ -143,27 +143,27 @@ public class SiMMLTrack {
     int _vcommandShift;  // vcommand shift
 
     // setting
-    private int[] _set_processMode;
+    private final int[] _set_processMode;
 
     // envelop settings
-    private SLLint[] _set_env_exp;
-    private SLLint[] _set_env_voice;
-    private SLLint[] _set_env_note;
-    private SLLint[] _set_env_pitch;
-    private SLLint[] _set_env_filter;
-    private boolean[] _set_exp_offset;
-    private boolean[] _pns_or;
+    private final SLLint[] _set_env_exp;
+    private final SLLint[] _set_env_voice;
+    private final SLLint[] _set_env_note;
+    private final SLLint[] _set_env_pitch;
+    private final SLLint[] _set_env_filter;
+    private final boolean[] _set_exp_offset;
+    private final boolean[] _pns_or;
 
-    private int[] _set_cnt_exp;
-    private int[] _set_cnt_voice;
-    private int[] _set_cnt_note;
-    private int[] _set_cnt_pitch;
-    private int[] _set_cnt_filter;
+    private final int[] _set_cnt_exp;
+    private final int[] _set_cnt_voice;
+    private final int[] _set_cnt_note;
+    private final int[] _set_cnt_pitch;
+    private final int[] _set_cnt_filter;
 
-    private SLLint[] _table_env_ma;
-    private SLLint[] _table_env_mp;
-    private int[] _set_sweep_step;
-    private int[] _set_sweep_end;
+    private final SLLint[] _table_env_ma;
+    private final SLLint[] _table_env_mp;
+    private final int[] _set_sweep_step;
+    private final int[] _set_sweep_end;
     private int _env_internval;
 
     // executing envelop
@@ -190,7 +190,7 @@ public class SiMMLTrack {
     private int _residue;   // residue of previous envelop process
 
     // zero table
-    private SLLint _env_zero_table = SLLint.allocRing(1, 0);
+    private final SLLint _env_zero_table = SLLint.allocRing(1, 0);
 
     // properties
     //
@@ -1290,7 +1290,7 @@ public class SiMMLTrack {
         _processMode = ENVELOP;
     }
 
-    /** @private [internal] change note length. call from SiMMLSequence._onSlur()/_onSlurWeek() when its masked. */
+    /** change note length. call from SiMMLSequence._onSlur()/_onSlurWeek() when it's masked. */
     void _changeNoteLength(int length) {
         _keyOnCounter = (int) (length * quantRatio) - quantCount - keyOnDelay;
         if (_keyOnCounter < 1) _keyOnCounter = 1;

@@ -7,7 +7,6 @@
 package org.si.sion;
 
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +33,6 @@ import org.si.sion.sequencer.SiMMLSequencer;
 import org.si.sion.sequencer.SiMMLTable;
 import org.si.sion.sequencer.SiMMLTrack;
 import org.si.sion.sequencer.SiMMLVoice;
-import org.si.sion.sequencer.base.MMLData;
 import org.si.sion.sequencer.base.MMLEvent;
 import org.si.sion.sequencer.base.MMLSequence;
 import org.si.sion.utils.Fader;
@@ -44,7 +42,6 @@ import org.si.utils.ByteArray;
 import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
-import org.si.utils.IOErrorEvent;
 import org.si.utils.SLLint;
 import vavi.media.Sound;
 import vavi.media.SoundChannel;
@@ -113,7 +110,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     /** version number */
     public static final String VERSION = "0.6.6.0";
 
-    /** note-on exception mode "ignore", SiON does not consider about track ID's conflict in noteOn() method (default). */
+    /** note-on exception mode "ignore", SiON does not consider track ID's conflict in noteOn() method (default). */
     public static final int NEM_IGNORE = 0;
     /** note-on exception mode "reject", Reject new note when the track IDs are conflicted. */
     public static final int NEM_REJECT = 1;
@@ -153,12 +150,12 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     private Sound _sound;                   // sound stream instance
     private SoundChannel _soundChannel;     // sound channel instance
     private SoundTransform _soundTransform; // sound transform
-    private Fader _fader;                   // sound fader
+    private final Fader _fader;                   // sound fader
     // SiOPM DSP module related
-    private int _channelCount;          // module output channels (1 or 2)
-    private double _sampleRate;         // module output frequency ratio (44100 or 22050)
-    private int _bitRate;               // module output bitrate
-    private int _bufferLength;          // module and streaming buffer size (8192, 4096 or 2048)
+    private final int _channelCount;          // module output channels (1 or 2)
+    private final double _sampleRate;         // module output frequency ratio (44100 or 22050)
+    private final int _bitRate;               // module output bitrate
+    private final int _bufferLength;          // module and streaming buffer size (8192, 4096 or 2048)
     private boolean _debugMode;         // true; throw Error, false; throw ErrorEvent
     private boolean _dispatchStreamEvent; // dispatch steam event
     private boolean _dispatchFadingEvent; // dispatch fading event
@@ -183,7 +180,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     private int _backgroundFadeInFrames;            // fading in frames
     private int _backgroundFadeGapFrames;           // fading gap frames
     private int _backgroundTotalFadeFrames;         // total fading in frames
-    private SiONVoice _backgroundVoice;             // voice
+    private final SiONVoice _backgroundVoice;             // voice
     private SiOPMWaveSamplerData _backgroundSample; // sampling data
     private SiMMLTrack _backgroundTrack;            // track for background Sound
     private SiMMLTrack _backgroundTrackFadeOut;     // track for background Sound's cross fading
@@ -195,8 +192,8 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     private List<SiONDriverJob> _jobQueue = null;   // compiling/rendering jobs queue
     private List<SiONTrackEvent> _trackEventQueue;  // SiONTrackEvents queue
     // timer interruption
-    private MMLSequence _timerSequence;     // global sequence
-    private MMLEvent _timerIntervalEvent;   // MMLEvent.GLOBAL_WAIT event
+    private final MMLSequence _timerSequence;     // global sequence
+    private final MMLEvent _timerIntervalEvent;   // MMLEvent.GLOBAL_WAIT event
     private Runnable _timerCallback;        // callback function
     // rendering
     private double[] _renderBuffer;  // rendering buffer
@@ -209,17 +206,17 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     private int _timeProcess;           // averge processing time in 1sec.
     private int _timeProcessTotal;      // total processing time in last 8 bufferings.
     private SLLint _timeProcessData;    // processing time data of last 8 bufferings.
-    private double _timeProcessAveRatio;// number to averaging _timeProcessTotal
+    private final double _timeProcessAveRatio;// number to averaging _timeProcessTotal
     private int _timePrevStream;        // previous streaming time.
     private double _latency;            // streaming latency [ms]
     private int _prevFrameTime;         // previous frame time
     private int _frameRate;             // frame rate
     // listeners management
-    private int _eventListenerPrior;    // event listeners priority
+    private final int _eventListenerPrior;    // event listeners priority
     private int _listenEvent;           // current lintening event
     // MIDI related
-    private MIDIModule _midiModule;                 // midi sound module
-    private SiONDataConverterSMF _midiConverter;    // SMF data converter
+    private final MIDIModule _midiModule;                 // midi sound module
+    private final SiONDataConverterSMF _midiConverter;    // SMF data converter
 
     // mutex instance
     private static SiONDriver _mutex = null;            // unique instance
@@ -262,7 +259,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
 
     // sound parameters
 
-    /** The number of sound tracks (this property instanceof only available during streaming). */
+    /** The number of soundtracks (this property instanceof only available during streaming). */
     public int getTrackCount() {
         return sequencer.tracks.size();
     }
@@ -419,7 +416,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
 
     // other parameters
 
-    /** The maximum limit of sound tracks. @default 128 */
+    /** The maximum limit of soundtracks. @default 128 */
     public int getMaxTrackCount() {
         return sequencer._maxTrackCount;
     }
@@ -529,7 +526,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         dummy = SiMMLTable.getInstance(); //initialize();
 
         // allocation
-        _jobQueue = new ArrayList<SiONDriverJob>();
+        _jobQueue = new ArrayList<>();
         module = new SiOPMModule();
         effector = new SiEffectModule(module);
         sequencer = new SiMMLSequencer(module, this::_callbackEventTriggerOn, this::_callbackEventTriggerOff, this::_callbackTempoChanged);
@@ -586,7 +583,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         // _soundTransform.volume = _masterVolume * _faderVolume;
 
         _eventListenerPrior = 1;
-        _trackEventQueue = new ArrayList<SiONTrackEvent>();
+        _trackEventQueue = new ArrayList<>();
 
         _queueInterval = 500;
         _jobProgress = 0;
@@ -917,7 +914,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      * @param time Fading time [second].
      */
     public void fadeIn(double time) {
-        _fader.setFade(this::_fadeVolume, (double) 0, 1.0, (int) (time * _sampleRate / _bufferLength));
+        _fader.setFade(this::_fadeVolume, 0, 1.0, (int) (time * _sampleRate / _bufferLength));
         _dispatchFadingEvent = false; // (hasEventListener(SiONEvent.FADE_PROGRESS));
     }
 
@@ -927,7 +924,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      * @param time Fading time [second].
      */
     public void fadeOut(double time) {
-        _fader.setFade(this::_fadeVolume, 1.0, (double) 0, (int) (time * _sampleRate / _bufferLength));
+        _fader.setFade(this::_fadeVolume, 1.0, 0, (int) (time * _sampleRate / _bufferLength));
         _dispatchFadingEvent = false; // (hasEventListener(SiONEvent.FADE_PROGRESS));
     }
 
@@ -1199,7 +1196,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         int internalTrackID = (trackID & SiMMLTrack.TRACK_ID_FILTER) | SiMMLTrack.DRIVER_NOTE;
         int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
         int n;
-        List<SiMMLTrack> tracks = new ArrayList<SiMMLTrack>();
+        List<SiMMLTrack> tracks = new ArrayList<>();
         for (SiMMLTrack mmlTrack : sequencer.tracks) {
             if (mmlTrack.getInternalTrackID() == internalTrackID) {
                 if (note == -1 || (note == mmlTrack.getNote() && mmlTrack.channel.isNoteOn())) {
@@ -1233,7 +1230,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     public List<SiMMLTrack> sequenceOn(SiONData data, SiONVoice voice, double length, double delay, double quant, int trackID, boolean isDisposable) {
         int internalTrackID = (trackID & SiMMLTrack.TRACK_ID_FILTER) | SiMMLTrack.DRIVER_SEQUENCE;
         SiMMLTrack mmlTrack;
-        List<SiMMLTrack> tracks = new ArrayList<SiMMLTrack>();
+        List<SiMMLTrack> tracks = new ArrayList<>();
         MMLSequence seq = data.sequenceGroup.getHeadSequence();
         int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
         int lengthSamples = (int)sequencer.calcSampleLength(length);
@@ -1264,7 +1261,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         int internalTrackID = (trackID & SiMMLTrack.TRACK_ID_FILTER) | SiMMLTrack.DRIVER_SEQUENCE;
         int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
         SiMMLTrack stoppedTrack = null;
-        List<SiMMLTrack> tracks = new ArrayList<SiMMLTrack>();
+        List<SiMMLTrack> tracks = new ArrayList<>();
         for (SiMMLTrack mmlTrack : sequencer.tracks) {
             if (mmlTrack.getInternalTrackID() == internalTrackID) {
                 mmlTrack.sequenceOff(delaySamples, stopWithReset);

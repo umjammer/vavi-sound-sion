@@ -5,7 +5,7 @@ public class BitmapData {
 
     public int width;
     public int height;
-    private int[] pixels;
+    private final int[] pixels;
 
     public BitmapData(int width, int height, boolean transparent, int fillColor) {
         this.width = width;

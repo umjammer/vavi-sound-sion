@@ -22,8 +22,8 @@ public class SiOPMStream {
     public double[] buffer = null;
 
     // coefficient of volume/panning
-    private double[] _panTable;
-    private double _i2n;
+    private final double[] _panTable;
+    private final double _i2n;
 
     // constructor
     //

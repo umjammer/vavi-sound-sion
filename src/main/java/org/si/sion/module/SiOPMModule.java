@@ -41,8 +41,8 @@ public class SiOPMModule {
     private int _bitRate;       // bit rate
 
     // pipes
-    private SLLint[] _pipeBuffer;
-    private SLLint[][] _pipeBufferPager;
+    private final SLLint[] _pipeBuffer;
+    private final SLLint[][] _pipeBufferPager;
 
     // properties
     //
@@ -73,8 +73,6 @@ public class SiOPMModule {
 
     /**
      * Default constructor
-     *
-     * @param busSize Number of mixing buses.
      */
     public SiOPMModule() {
         // initial values

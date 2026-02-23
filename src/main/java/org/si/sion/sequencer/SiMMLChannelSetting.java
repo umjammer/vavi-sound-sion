@@ -34,7 +34,7 @@ public class SiMMLChannelSetting {
     int _channelType;
     boolean _isSuitableForFMVoice;
     int _defaultOpeCount;
-    private SiOPMTable _table;
+    private final SiOPMTable _table;
 
     // constructor
     //

@@ -93,7 +93,7 @@ public class FFT {
 
     private int _length = 0;
     private double[] _cosTable = null;
-    private int[] _bitrvTemp = new int[256];
+    private final int[] _bitrvTemp = new int[256];
     private double[] _waveTabler = null;
     private double[] _waveTablei = null;
 

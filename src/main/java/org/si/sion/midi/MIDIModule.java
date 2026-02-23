@@ -59,14 +59,14 @@ public class MIDIModule {
     private SiONDriver _sionDriver = null;
     private int _polyphony;
     // operators 
-    private MIDIModuleOperator _freeOperators;
-    private MIDIModuleOperator _activeOperators;
+    private final MIDIModuleOperator _freeOperators;
+    private final MIDIModuleOperator _activeOperators;
     // drum track related 
-    private int[] _drumExclusiveGroupID;
-    private MIDIModuleOperator[] _drumExclusiveOperator;
-    private int[] _drumNoteOffAvailable;
+    private final int[] _drumExclusiveGroupID;
+    private final MIDIModuleOperator[] _drumExclusiveOperator;
+    private final int[] _drumNoteOffAvailable;
     // effector related 
-    private SiEffectBase[][] _effectorSet;
+    private final SiEffectBase[][] _effectorSet;
     // MIDI event related 
     private int _dataEntry;
     private int _rpnNumber;
@@ -235,7 +235,7 @@ public class MIDIModule {
      * @param voiceNumbers list of voice number that have same groupID
      */
     public void setDrumExclusiveGroup(int groupID, int[] voiceNumbers) {
-        for (int i = 0; i < voiceNumbers.length; i++) _drumExclusiveGroupID[voiceNumbers[i]] = groupID;
+        for (int voiceNumber : voiceNumbers) _drumExclusiveGroupID[voiceNumber] = groupID;
     }
 
     /**
@@ -254,7 +254,7 @@ public class MIDIModule {
      * @param voiceNumbers list of voice number that enables note off
      */
     public void enableDrumNoteOff(int[] voiceNumbers, boolean enable /* = true */) {
-        for (int i = 0; i < voiceNumbers.length; i++) _drumNoteOffAvailable[voiceNumbers[i]] = (enable) ? 1 : 0;
+        for (int voiceNumber : voiceNumbers) _drumNoteOffAvailable[voiceNumber] = (enable) ? 1 : 0;
     }
 
     /** reset all channels */
@@ -465,35 +465,25 @@ public class MIDIModule {
 
             case SMFEvent.CC_MODULATION:
                 midiChannel.modulation = data;
-                $(ope -> {
-                    ope.sionTrack.channel.setPitchModulation(midiChannel.modulation >> 2);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setPitchModulation(midiChannel.modulation >> 2), channelNum);
             break;
             case SMFEvent.CC_PORTAMENTO_TIME:
                 midiChannel.portamentoTime = data;
-                $(ope -> {
-                    ope.sionTrack.setPortament(midiChannel.portamentoTime);
-                }, channelNum);
+                $(ope -> ope.sionTrack.setPortament(midiChannel.portamentoTime), channelNum);
             break;
 
             case SMFEvent.CC_VOLUME:
                 midiChannel.setMasterVolume(data);
-                $(ope -> {
-                    ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes), channelNum);
             break;
             //case SMFEvent.CC_BALANCE:
             case SMFEvent.CC_PANPOD:
                 midiChannel.pan = data - 64;
-                $(ope -> {
-                    ope.sionTrack.channel.setPan(midiChannel.pan);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setPan(midiChannel.pan), channelNum);
             break;
             case SMFEvent.CC_EXPRESSION:
                 midiChannel.setExpression(data);
-                $(ope -> {
-                    ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes), channelNum);
             break;
 
             case SMFEvent.CC_SUSTAIN_PEDAL:
@@ -512,21 +502,15 @@ public class MIDIModule {
 //            case SMFEvent.CC_PROTAMENTO_CONTROL:
             case SMFEvent.CC_REVERB_SEND:
                 midiChannel.setEffectSendLevel(1, data);
-                $(ope -> {
-                    ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes), channelNum);
             break;
             case SMFEvent.CC_CHORUS_SEND:
                 midiChannel.setEffectSendLevel(2, data);
-                $(ope -> {
-                    ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes), channelNum);
             break;
             case SMFEvent.CC_DELAY_SEND:
                 midiChannel.setEffectSendLevel(3, data);
-                $(ope -> {
-                    ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes);
-                }, channelNum);
+                $(ope -> ope.sionTrack.channel.setAllStreamSendLevels(midiChannel._sionVolumes), channelNum);
             break;
 
             case SMFEvent.CC_NRPN_MSB:

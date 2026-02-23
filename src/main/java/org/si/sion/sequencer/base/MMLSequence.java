@@ -37,7 +37,7 @@ public class MMLSequence {
     // Next sequence in the chain.
     private MMLSequence _nextSequence;
     // Is terminal sequence.
-    private boolean _isTerminal;
+    private final boolean _isTerminal;
 
     /** @private [sion sequencer internal] callback functions for Event.INTERNAL_CALL */
     List<Function<Object, MMLEvent>> _callbackInternalCall;
@@ -91,13 +91,13 @@ public class MMLSequence {
     public String toString() {
         if (_isTerminal) return "terminator";
         MMLEvent e = headEvent.next;
-        String str = "";
+        StringBuilder str = new StringBuilder();
         for (int i = 0; i < 32; i++) {
-            str += e.id + " ";
+            str.append(e.id).append(" ");
             e = e.next;
             if (e == null) break;
         }
-        return str;
+        return str.toString();
     }
 
     /**

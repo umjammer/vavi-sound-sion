@@ -1,6 +1,5 @@
 package org.si.sion.utils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,6 @@ import org.si.sion.SiONVoice;
 import org.si.sion.midi.SMFData;
 import org.si.sion.utils.soundloader.SoundLoader;
 import org.si.sion.utils.soundloader.SoundLoaderFileData;
-import org.si.utils.ByteArray;
 import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.ProgressEvent;
@@ -77,7 +75,7 @@ public class MMLTalksParser {
     }
 
     /**
-     * set url to loading resource if needs.
+     * set url to loading resource if it needs.
      *
      * @param url URL of the resource to load
      */

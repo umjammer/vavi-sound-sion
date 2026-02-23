@@ -178,22 +178,22 @@ public class SiOPMChannelParam {
 
     /** information */
     public String toString() {
-        String str = "SiOPMChannelParam : opeCount=";
-        str += opeCount + "\n";
-        str += "  freq.ratio=" + fratio + "\n";
-        str += "  alg=" + alg + "\n";
-        str += "  fb =" + fb + " / fbc=" + fbc + "\n";
-        str += "  lws=" + lfoWaveShape + " / lfq=" + SiOPMTable.LFO_TIMER_INITIAL * 0.005782313 / lfoFreqStep + "\n";
-        str += "  amd=" + amd + " / pmd=" + pmd + "\n";
-        str += "  vol=" + volumes[0] + " / pan=" + (pan - 64) + "\n";
-        str += "  filter type=" + filterType + "\n";
-        str += "  co=" + cutoff + " / res=" + resonance + "\n";
-        str += "fenv=" + far + "/" + fdr1 + "/" + fdr2 + "/" + frr + "\n";
-        str += "feco=" + fdc1 + "/" + fdc2 + "/" + fsc + "/" + frc + "\n";
+        StringBuilder str = new StringBuilder("SiOPMChannelParam : opeCount=");
+        str.append(opeCount).append("\n");
+        str.append("  freq.ratio=").append(fratio).append("\n");
+        str.append("  alg=").append(alg).append("\n");
+        str.append("  fb =").append(fb).append(" / fbc=").append(fbc).append("\n");
+        str.append("  lws=").append(lfoWaveShape).append(" / lfq=").append(SiOPMTable.LFO_TIMER_INITIAL * 0.005782313 / lfoFreqStep).append("\n");
+        str.append("  amd=").append(amd).append(" / pmd=").append(pmd).append("\n");
+        str.append("  vol=").append(volumes[0]).append(" / pan=").append(pan - 64).append("\n");
+        str.append("  filter type=").append(filterType).append("\n");
+        str.append("  co=").append(cutoff).append(" / res=").append(resonance).append("\n");
+        str.append("fenv=").append(far).append("/").append(fdr1).append("/").append(fdr2).append("/").append(frr).append("\n");
+        str.append("feco=").append(fdc1).append("/").append(fdc2).append("/").append(fsc).append("/").append(frc).append("\n");
         for (int i = 0; i < opeCount; i++) {
-            str += operatorParam[i].toString() + "\n";
+            str.append(operatorParam[i].toString()).append("\n");
         }
-        return str;
+        return str.toString();
     }
 
     /**

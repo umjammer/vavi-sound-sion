@@ -16,7 +16,7 @@ public class SiEffectStereoDelay extends SiEffectBase {
     private final int DELAY_BUFFER_BITS = 16;
     private final int DELAY_BUFFER_FILTER = (1 << DELAY_BUFFER_BITS) - 1;
 
-    private double[][] _delayBuffer;
+    private final double[][] _delayBuffer;
     private int _pointerRead;
     private int _pointerWrite;
     private double _feedback;

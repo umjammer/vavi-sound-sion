@@ -16,7 +16,7 @@ import org.si.utils.SLLint;
 
 /**
  * SiOPM operator class.
- * This operator based on the OPM emulation of MAME, but its extended in below points,<br/>
+ * This operator based on the OPM emulation of MAME, but It's extended in below points,<br/>
  * 1) You can set the phase offest of pulse generator. <br/>
  * 2) You can select the wave form from some wave tables (see class SiOPMTable).<br/>
  * 3) You can set the key scale level.<br/>
@@ -157,7 +157,7 @@ public class SiOPMOperator {
     /** @private _eg_level converter */
     int[] _eg_levelTable;
     // Next status table
-    private int[][] _table_nextState = {
+    private final int[][] _table_nextState = {
             // EG_ATTACK,  EG_DECAY,   EG_SUSTAIN, EG_RELEASE, EG_OFF
             {EG_DECAY, EG_SUSTAIN, EG_OFF, EG_OFF, EG_OFF}, // normal
             {EG_DECAY, EG_SUSTAIN, EG_ATTACK, EG_OFF, EG_OFF}  // ssgev

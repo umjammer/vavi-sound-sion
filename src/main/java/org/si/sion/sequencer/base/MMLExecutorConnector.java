@@ -205,7 +205,7 @@ class MECElement {
     }
 
     // Factory
-    private static List<MECElement> _freeList = new ArrayList<>();
+    private static final List<MECElement> _freeList = new ArrayList<>();
 
     public void free(MECElement elem) {
         _freeList.add(elem);

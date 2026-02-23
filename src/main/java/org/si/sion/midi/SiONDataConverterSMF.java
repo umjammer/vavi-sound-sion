@@ -21,7 +21,7 @@ public class SiONDataConverterSMF extends SiONData {
 
     private SMFData _smfData;
     private MIDIModule _module;
-    private MMLEvent _waitEvent;
+    private final MMLEvent _waitEvent;
     private SMFExecutor[] _executors = null;
     private double _resolutionRatio = 1;
 

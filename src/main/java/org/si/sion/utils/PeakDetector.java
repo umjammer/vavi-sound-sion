@@ -21,7 +21,7 @@ public class PeakDetector {
     /** maximum value of peaksPerMinute, the minimum value instanceof a half of maximum value. @default 192 */
     public double maxPeaksPerMinute = 192;
 
-    private SiFilterBandPass _bpf = new SiFilterBandPass(3000, 1);
+    private final SiFilterBandPass _bpf = new SiFilterBandPass(3000, 1);
     private SLLNumber _window = null;
 
     private double _frequency;
@@ -147,7 +147,7 @@ public class PeakDetector {
         return _peaksPerMinute;
     }
 
-    /** probability of estimated peaksPerMinute value. 1 means estimated perfectly and 0 means not good estimation. */
+    /** probability of estimated peaksPerMinute value. 1 mean estimated perfectly and 0 means not good estimation. */
     public double getPeaksPerMinuteProbability() {
         _updatePeakFreq();
         return _peaksPerMinuteProbability;
@@ -431,7 +431,7 @@ public class PeakDetector {
         int highScoreFrames, i, imax, j, frm;
         double thres;
         double pmin, pmax;
-        // find highest score
+        // find the highest score
         for (highScoreFrames = 100, i = 101; i < 2000; i++) {
             if (_ppmScore[i] > _ppmScore[highScoreFrames]) highScoreFrames = i;
         }

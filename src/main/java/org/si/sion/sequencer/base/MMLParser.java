@@ -66,16 +66,16 @@ public class MMLParser {
     private boolean _isLastEventLength = false;
     private int _systemEventIndex = 0;
     private int _sequenceMMLIndex = 0;
-    private int _headMMLIndex = 0;
-    private boolean _cacheMMLString = false;
+    private final int _headMMLIndex = 0;
+    private final boolean _cacheMMLString = false;
 
-    private int[] _keyScale = {0, 2, 4, 5, 7, 9, 11};
+    private final int[] _keyScale = {0, 2, 4, 5, 7, 9, 11};
     private int[] _keySignature = _keySignatureTable[0];
-    private int[] _keySignatureCustom = new int[7];
-    private MMLEvent _terminator = new MMLEvent();
+    private final int[] _keySignatureCustom = new int[7];
+    private final MMLEvent _terminator = new MMLEvent();
     private MMLEvent _lastEvent = null;
     private MMLEvent _lastSequenceHead = null;
-    private List<MMLEvent> _repeatStac = new ArrayList<>();
+    private final List<MMLEvent> _repeatStac = new ArrayList<>();
 
     // properties
     //
@@ -294,56 +294,29 @@ public class MMLParser {
      * @return Event id. Returns 0 if not found.
      */
     public static int getEventID(String mmlCommand) {
-        switch (mmlCommand) {
-            case "c":
-            case "d":
-            case "e":
-            case "f":
-            case "g":
-            case "a":
-            case "b":
-                return MMLEvent.NOTE;
-            case "r":
-                return MMLEvent.REST;
-            case "q":
-                return MMLEvent.QUANT_RATIO;
-            case "@q":
-                return MMLEvent.QUANT_COUNT;
-            case "v":
-                return MMLEvent.VOLUME;
-            case "@v":
-                return MMLEvent.FINE_VOLUME;
-            case "%":
-                return MMLEvent.MOD_TYPE;
-            case "@":
-                return MMLEvent.MOD_PARAM;
-            case "@i":
-                return MMLEvent.INPUT_PIPE;
-            case "@o":
-                return MMLEvent.OUTPUT_PIPE;
-            case "(":
-            case ")":
-                return MMLEvent.VOLUME_SHIFT;
-            case "&":
-                return MMLEvent.SLUR;
-            case "&&":
-                return MMLEvent.SLUR_WEAK;
-            case "*":
-                return MMLEvent.PITCHBEND;
-            case ",":
-                return MMLEvent.PARAMETER;
-            case "$":
-                return MMLEvent.REPEAT_ALL;
-            case "[":
-                return MMLEvent.REPEAT_BEGIN;
-            case "]":
-                return MMLEvent.REPEAT_END;
-            case "|":
-                return MMLEvent.REPEAT_BREAK;
-            case "t":
-                return MMLEvent.TEMPO;
-        }
-        return 0;
+        return switch (mmlCommand) {
+            case "c", "d", "e", "f", "g", "a", "b" -> MMLEvent.NOTE;
+            case "r" -> MMLEvent.REST;
+            case "q" -> MMLEvent.QUANT_RATIO;
+            case "@q" -> MMLEvent.QUANT_COUNT;
+            case "v" -> MMLEvent.VOLUME;
+            case "@v" -> MMLEvent.FINE_VOLUME;
+            case "%" -> MMLEvent.MOD_TYPE;
+            case "@" -> MMLEvent.MOD_PARAM;
+            case "@i" -> MMLEvent.INPUT_PIPE;
+            case "@o" -> MMLEvent.OUTPUT_PIPE;
+            case "(", ")" -> MMLEvent.VOLUME_SHIFT;
+            case "&" -> MMLEvent.SLUR;
+            case "&&" -> MMLEvent.SLUR_WEAK;
+            case "*" -> MMLEvent.PITCHBEND;
+            case "," -> MMLEvent.PARAMETER;
+            case "$" -> MMLEvent.REPEAT_ALL;
+            case "[" -> MMLEvent.REPEAT_BEGIN;
+            case "]" -> MMLEvent.REPEAT_END;
+            case "|" -> MMLEvent.REPEAT_BREAK;
+            case "t" -> MMLEvent.TEMPO;
+            default -> 0;
+        };
     }
 
     /** get command letters. */
@@ -618,7 +591,7 @@ public class MMLParser {
     // parse length. The return value of Integer.MIN_VALUE means abbreviation.
     private int __calcLength (java.util.regex.Matcher res) {
         String paramStr = res.group(REX_PARAM);
-        if (paramStr == null || paramStr.length() == 0) return Integer.MIN_VALUE;
+        if (paramStr == null || paramStr.isEmpty()) return Integer.MIN_VALUE;
         int len = Integer.parseInt(paramStr);
         if (len == 0) return 0;
         int iLength = _setting.resolution / len;
@@ -813,16 +786,16 @@ public class MMLParser {
 
     // break repeating
     private void _repeatBreak() {
-        if (_repeatStac.size() == 0) throw errorStacUnderflow("|");
+        if (_repeatStac.isEmpty()) throw errorStacUnderflow("|");
         addMMLEvent(MMLEvent.REPEAT_BREAK, 0, 0, false);
-        _lastEvent.jump = (MMLEvent) _repeatStac.get(0);
+        _lastEvent.jump = _repeatStac.get(0);
     }
 
     // end repeating
     private void _repeatEnd(int rep) {
-        if (_repeatStac.size() == 0) throw errorStacUnderflow("]");
+        if (_repeatStac.isEmpty()) throw errorStacUnderflow("]");
         addMMLEvent(MMLEvent.REPEAT_END, 0, 0, false);
-        MMLEvent beginEvent = (MMLEvent) _repeatStac.remove(0);
+        MMLEvent beginEvent = _repeatStac.remove(0);
         _lastEvent.jump = beginEvent;   // rep_end.jump   = rep_start
         beginEvent.jump = _lastEvent;   // rep_start.jump = rep_end
 

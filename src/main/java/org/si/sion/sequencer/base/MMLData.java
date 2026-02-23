@@ -73,7 +73,7 @@ public class MMLData {
 
     /**
      * system commands that can not be parsed. Examples are for mml string "#ABC5{def}ghi;".<br/>
-     * the array elements are Object, and it has following properties.<br/>
+     * the array elements are Object, and it has the following properties.<br/>
      * <ul>
      * <li>command: command name. this always starts with "#". ex) command = "#ABC"</li>
      * <li>number:  number after command. ex) number = 5</li>
@@ -159,14 +159,11 @@ public class MMLData {
 
     /** @private calculate bpm from t command parameter */
     double _calcBPMfromTcommand(int param) {
-        switch (tcommandMode) {
-            case TCOMMAND_BPM:
-                return param * tcommandResolution;
-            case TCOMMAND_FRAME:
-                return (param != 0) ? (tcommandResolution / param) : 120;
-            case TCOMMAND_TIMERB:
-                return (param >= 0 && param < 256) ? (tcommandResolution / (256 - param)) : 120;
-        }
-        return 0;
+        return switch (tcommandMode) {
+            case TCOMMAND_BPM -> param * tcommandResolution;
+            case TCOMMAND_FRAME -> (param != 0) ? (tcommandResolution / param) : 120;
+            case TCOMMAND_TIMERB -> (param >= 0 && param < 256) ? (tcommandResolution / (256 - param)) : 120;
+            default -> 0;
+        };
     }
 }

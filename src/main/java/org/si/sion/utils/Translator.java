@@ -161,15 +161,15 @@ public class Translator {
                             }
                             break;
                             case "q": {
-                                mml.append("q").append(String.valueOf((Integer.parseInt(res.group(3)) + 1) >> 1));
+                                mml.append("q").append((Integer.parseInt(res.group(3)) + 1) >> 1);
                             }
                             break;
                             case "@m": {
-                                mml.append("@mask").append(String.valueOf(Integer.parseInt(res.group(3))));
+                                mml.append("@mask").append(Integer.parseInt(res.group(3)));
                             }
                             break;
                             case "ml": {
-                                mml.append("@ml").append(String.valueOf(Integer.parseInt(res.group(3))));
+                                mml.append("@ml").append(Integer.parseInt(res.group(3)));
                             }
                             break;
                             case "p": {
@@ -313,7 +313,7 @@ public class Translator {
                                 p0 = Integer.parseInt(res.group(3));
                                 p1 = Integer.parseInt(res.group(4));
                                 mml.append("s").append(table.tss_s2rr[p0 & 255]);
-                                if (p1 != 0) mml.append(",").append(String.valueOf(p1 * 3));
+                                if (p1 != 0) mml.append(",").append(p1 * 3);
                             }
                             break;
                             case "@s": {
@@ -322,7 +322,7 @@ public class Translator {
                                 p3 = Integer.parseInt(res.group(6));
                                 p2 = (Integer.parseInt(res.group(5)) >= 100) ? 15 : (int) (Double.parseDouble(res.group(5)) * 0.09);
                                 mml.append((p0 == 0) ? "@,63,0,0,,0" : (
-                                        "@," + table.tss_s2ar[p0 & 255] + "," + table.tss_s2dr[p1 & 255] + "," + table.tss_s2sr[p3 & 255] + ",," + String.valueOf(p2)
+                                        "@," + table.tss_s2ar[p0 & 255] + "," + table.tss_s2dr[p1 & 255] + "," + table.tss_s2sr[p3 & 255] + ",," + p2
                                 ));
                             }
                             break;
@@ -459,11 +459,11 @@ public class Translator {
                     case "FM": {
                         String fmRaw = String.valueOf(res.group(9));
                         Matcher fmMatcher = Pattern.compile("([A-Z])([0-9])?(\\()?", Pattern.CASE_INSENSITIVE).matcher(fmRaw);
-                        StringBuffer fmConverted = new StringBuffer();
+                        StringBuilder fmConverted = new StringBuilder();
                         while (fmMatcher.find()) {
                             String numToken = fmMatcher.group(2);
                             int num = (numToken != null && !numToken.isEmpty()) ? Integer.parseInt(numToken) : 3;
-                            String suffix = (fmMatcher.group(3) != null) ? (String.valueOf(num) + "(") : "";
+                            String suffix = (fmMatcher.group(3) != null) ? (num + "(") : "";
                             fmMatcher.appendReplacement(fmConverted, fmMatcher.group(1).toLowerCase() + suffix);
                         }
                         fmMatcher.appendTail(fmConverted);
@@ -485,7 +485,7 @@ public class Translator {
                             // other system events
                             Matcher sysRes = rex_sys.matcher(res.group(9));
                             if (sysRes.find()) {
-                                if (sysRes.group(2).length() == 0) return "#" + str1 + sysRes.group(1);
+                                if (sysRes.group(2).isEmpty()) return "#" + str1 + sysRes.group(1);
                                 mml.append("#").append(str1).append(sysRes.group(1)).append("{").append(sysRes.group(2)).append("}");
                             }
                         }
@@ -1017,7 +1017,7 @@ public class Translator {
         mml.append("{");
         mml.append(param.alg).append(separator);
         mml.append(param.fb).append(separator);
-        mml.append(String.valueOf(param.fbc));
+        mml.append(param.fbc);
         if (comment != null) {
             if (lineEnd.equals("\n")) mml.append(" // ").append(comment);
             else mml.append("/* ").append(comment).append(" */");
@@ -1076,17 +1076,17 @@ public class Translator {
             mml.append(lineEnd);
             pgType = _pgTypeMA3(opp.pgType);
             if (pgType == -1) throw errorParameterNotValid("#OPL@", "SiOPM ws" + opp.pgType);
-            mml.append(String.valueOf(pgType)).append(separator);              // ws
+            mml.append(pgType).append(separator);              // ws
             mml.append(_str(opp.ar >> 2, 2)).append(separator);        // ar
             mml.append(_str(opp.dr >> 2, 2)).append(separator);        // dr
             mml.append(_str(opp.rr >> 2, 2)).append(separator);        // rr
             mml.append((opp.sr == 0) ? "1" : "0").append(separator); // egt
             mml.append(_str(opp.sl, 2)).append(separator);                 // sl
             mml.append(_str(Math.min(opp.tl, 63), 2)).append(separator);  // tl
-            mml.append(String.valueOf(opp.ksr >> 1)).append(separator);              // ksr
-            mml.append(String.valueOf(opp.ksl)).append(separator);                 // ksl
+            mml.append(opp.ksr >> 1).append(separator);              // ksr
+            mml.append(opp.ksl).append(separator);                 // ksl
             mml.append(_str(opp.getMul(), 2)).append(separator);                // mul
-            mml.append(String.valueOf(opp.ams));                             // ams
+            mml.append(opp.ams);                             // ams
         }
         mml.append("}");
 
@@ -1132,7 +1132,7 @@ public class Translator {
             mml.append(_str(opp.getMul(), 2)).append(separator);            // mul
             mml.append(opp.dt1).append(separator);             // dt1
             mml.append(_dt2OPM(opp.detune)).append(separator); // dt2
-            mml.append(String.valueOf(opp.ams));                         // ams
+            mml.append(opp.ams);                         // ams
         }
         mml.append("}");
 
@@ -1174,10 +1174,10 @@ public class Translator {
             mml.append(_str(opp.rr >> 2, 2)).append(separator);    // rr
             mml.append(_str(opp.sl, 2)).append(separator);         // sl
             mml.append(_str(opp.tl, res.get("tl"))).append(separator);    // tl
-            mml.append(String.valueOf(opp.ksl)).append(separator);         // ksl
+            mml.append(opp.ksl).append(separator);         // ksl
             mml.append(_str(opp.getMul(), 2)).append(separator);        // mul
-            mml.append(String.valueOf(opp.dt1)).append(separator);         // dt1
-            mml.append(String.valueOf(opp.ams));                     // ams
+            mml.append(opp.dt1).append(separator);         // dt1
+            mml.append(opp.ams);                     // ams
         }
         mml.append("}");
 
@@ -1225,7 +1225,7 @@ public class Translator {
             mml.append(_str(opp.getMul(), 2)).append(separator);            // mul
             mml.append(opp.dt1).append(separator);             // dt1
             mml.append(_str(opp.detune, res.get("dt"))).append(separator);    // det
-            mml.append(String.valueOf(opp.ams));                         // ams
+            mml.append(opp.ams);                         // ams
         }
         mml.append("}");
 
@@ -1543,74 +1543,74 @@ public class Translator {
 
     /** reconstruct voice setting mml (except for channel operator parameters and envelopes) */
     public static String mmlVoiceSetting(SiMMLVoice voice) {
-        String mml = "";
+        StringBuilder mml = new StringBuilder();
         SiOPMChannelParam param = voice.channelParam;
         int i;
-        if (voice.channelParam.filterType > 0) mml += "%f" + voice.channelParam.filterType;
+        if (voice.channelParam.filterType > 0) mml.append("%f").append(voice.channelParam.filterType);
         if (param.cutoff < 128 || param.resonance > 0 || param.far > 0 || param.frr > 0) {
-            mml += "@f" + param.cutoff + "," + param.resonance;
+            mml.append("@f").append(param.cutoff).append(",").append(param.resonance);
             if (param.far > 0 || param.frr > 0) {
-                mml += "," + param.far + "," + param.fdr1 + "," + param.fdr2 + "," + param.frr;
-                mml += "," + param.fdc1 + "," + param.fdc2 + "," + param.fsc + "," + param.frc;
+                mml.append(",").append(param.far).append(",").append(param.fdr1).append(",").append(param.fdr2).append(",").append(param.frr);
+                mml.append(",").append(param.fdc1).append(",").append(param.fdc2).append(",").append(param.fsc).append(",").append(param.frc);
             }
         }
         if (voice.amDepth > 0 || voice.amDepthEnd > 0 || param.amd > 0 || voice.pmDepth > 0 || voice.pmDepthEnd > 0 || param.pmd > 0) {
             int lfo = param.getLfoFrame(), ws = param.lfoWaveShape;
             if (lfo != 30 || ws != SiOPMTable.LFO_WAVE_TRIANGLE) {
-                mml += "@lfo" + lfo;
-                if (ws != SiOPMTable.LFO_WAVE_TRIANGLE) mml += "," + ws;
+                mml.append("@lfo").append(lfo);
+                if (ws != SiOPMTable.LFO_WAVE_TRIANGLE) mml.append(",").append(ws);
             }
             if (voice.amDepth > 0 || voice.amDepthEnd > 0) {
-                mml += "ma" + voice.amDepth;
-                if (voice.amDepthEnd > 0) mml += "," + voice.amDepthEnd;
-                if (voice.amDelay > 0 || voice.amTerm > 0) mml += "," + voice.amDelay;
-                if (voice.amTerm > 0) mml += "," + voice.amTerm;
+                mml.append("ma").append(voice.amDepth);
+                if (voice.amDepthEnd > 0) mml.append(",").append(voice.amDepthEnd);
+                if (voice.amDelay > 0 || voice.amTerm > 0) mml.append(",").append(voice.amDelay);
+                if (voice.amTerm > 0) mml.append(",").append(voice.amTerm);
             } else if (param.amd > 0) {
-                mml += "ma" + String.valueOf(param.amd);
+                mml.append("ma").append(param.amd);
             }
             if (voice.pmDepth > 0 || voice.pmDepthEnd > 0) {
-                mml += "mp" + voice.pmDepth;
-                if (voice.pmDepthEnd > 0) mml += "," + voice.pmDepthEnd;
-                if (voice.pmDelay > 0 || voice.pmTerm > 0) mml += "," + String.valueOf(voice.pmDelay);
-                if (voice.pmTerm > 0) mml += "," + String.valueOf(voice.pmTerm);
+                mml.append("mp").append(voice.pmDepth);
+                if (voice.pmDepthEnd > 0) mml.append(",").append(voice.pmDepthEnd);
+                if (voice.pmDelay > 0 || voice.pmTerm > 0) mml.append(",").append(voice.pmDelay);
+                if (voice.pmTerm > 0) mml.append(",").append(voice.pmTerm);
             } else if (param.pmd > 0) {
-                mml += "mp" + param.pmd;
+                mml.append("mp").append(param.pmd);
             }
         }
         if (voice.velocityMode != 0 || voice.vcommandShift != 4) {
-            mml += "%v" + voice.velocityMode + "," + voice.vcommandShift;
+            mml.append("%v").append(voice.velocityMode).append(",").append(voice.vcommandShift);
         }
-        if (voice.expressionMode != 0) mml += "%x" + voice.expressionMode;
-        if (voice.portamento > 0) mml += "po" + voice.portamento;
-        if (!Double.isNaN(voice.defaultGateTime)) mml += "q" + (int) (voice.defaultGateTime * 8);
+        if (voice.expressionMode != 0) mml.append("%x").append(voice.expressionMode);
+        if (voice.portamento > 0) mml.append("po").append(voice.portamento);
+        if (!Double.isNaN(voice.defaultGateTime)) mml.append("q").append((int) (voice.defaultGateTime * 8));
         if (voice.defaultGateTicks > 0 || voice.defaultKeyOnDelayTicks > 0) {
-            mml += "@q" + voice.defaultGateTicks + "," + voice.defaultKeyOnDelayTicks;
+            mml.append("@q").append(voice.defaultGateTicks).append(",").append(voice.defaultKeyOnDelayTicks);
         }
-        if (voice.releaseSweep > 0) mml += "s," + voice.releaseSweep;
-        if (voice.channelParam.operatorParam[0].erst) mml += "@er1";
-        if (voice.pitchShift != 0) mml += "k" + voice.pitchShift;
-        if (voice.noteShift != 0) mml += "kt" + voice.noteShift;
+        if (voice.releaseSweep > 0) mml.append("s,").append(voice.releaseSweep);
+        if (voice.channelParam.operatorParam[0].erst) mml.append("@er1");
+        if (voice.pitchShift != 0) mml.append("k").append(voice.pitchShift);
+        if (voice.noteShift != 0) mml.append("kt").append(voice.noteShift);
         if (voice.updateVolumes) {
             int ch = (voice.channelParam.volumes[0] == 0.5) ? 0 : 1;
             for (i = 1; i < 8; i++) if (voice.channelParam.volumes[i] != 0) ch = i + 1;
             if (i != 0) {
-                mml += "@v";
+                mml.append("@v");
                 if (voice.channelParam.volumes[0] != 0.5)
-                    mml += (int) (voice.channelParam.volumes[0] * 128);
+                    mml.append((int) (voice.channelParam.volumes[0] * 128));
                 for (i = 1; i < ch; i++) {
                     if (voice.channelParam.volumes[i] != 0)
-                        mml += "," + (int) (voice.channelParam.volumes[i] * 128);
+                        mml.append(",").append((int) (voice.channelParam.volumes[i] * 128));
                 }
             }
             if (voice.channelParam.pan != 64) {
-                if ((voice.channelParam.pan & 15) != 0) mml += "@p" + (voice.channelParam.pan - 64);
-                else mml += "p" + (voice.channelParam.pan >> 4);
+                if ((voice.channelParam.pan & 15) != 0) mml.append("@p").append(voice.channelParam.pan - 64);
+                else mml.append("p").append(voice.channelParam.pan >> 4);
             }
-            if (voice.velocity != 256) mml += "v" + (voice.velocity >> voice.vcommandShift);
-            if (voice.expression != 128) mml += "@v" + voice.expression;
+            if (voice.velocity != 256) mml.append("v").append(voice.velocity >> voice.vcommandShift);
+            if (voice.expression != 128) mml.append("@v").append(voice.expression);
         }
 
-        return mml;
+        return mml.toString();
     }
 
     // envelop table
@@ -1838,7 +1838,7 @@ public class Translator {
                 loopPoint = (args[7] != null && !args[7].isEmpty()) ? Integer.parseInt(args[7]) : -1;
         if (soundReferTable instanceof Map<?, ?> tableMap && tableMap.containsKey(waveID)) {
             Object wave = tableMap.get(waveID);
-            SiOPMWavePCMData sample = new SiOPMWavePCMData(wave, (int) (samplingNote * 64), 2, channelCount);
+            SiOPMWavePCMData sample = new SiOPMWavePCMData(wave, samplingNote * 64, 2, channelCount);
             sample.slice(startPoint, endPoint, loopPoint);
             table.setSample(sample, keyRangeFrom, keyRangeTo);
             return true;
@@ -2058,23 +2058,14 @@ public class Translator {
     private static int _pgTypeMA3(int pgType) {
         int ws = pgType - SiOPMTable.PG_MA3_WAVE;
         if (ws >= 0 && ws <= 31) return ws;
-        switch (pgType) {
-            case 0:
-                return 0;   // sin
-            case 1:
-            case 2:
-            case 128:
-            case 255:
-                return 24;  // saw
-            case 4:
-            case 192:
-            case 191:
-                return 16;  // triangle
-            case 5:
-            case 72:
-                return 6;   // square
-        }
-        return -1;
+        return switch (pgType) {
+            case 0 -> 0;   // sin
+            case 1, 2, 128, 255 -> 24;  // saw
+            case 4, 192, 191 -> 16;  // triangle
+            case 5, 72 -> 6;
+            default ->   // square
+                    -1;
+        };
     }
 
     // find nearest dt2 value
@@ -2099,7 +2090,7 @@ public class Translator {
     // errors
     //
     public static RuntimeException errorToneParameterNotValid(String cmd, int chParam, int opParam) {
-        return new RuntimeException("Translator error : Parameter count instanceof not valid in '" + cmd + "'. " + String.valueOf(chParam) + " parameters for channel and " + String.valueOf(opParam) + " parameters for each operator.");
+        return new RuntimeException("Translator error : Parameter count instanceof not valid in '" + cmd + "'. " + chParam + " parameters for channel and " + opParam + " parameters for each operator.");
     }
 
     public static RuntimeException errorParameterNotValid(String cmd, Object param) {

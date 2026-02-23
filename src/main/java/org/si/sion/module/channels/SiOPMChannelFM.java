@@ -358,8 +358,7 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
             _funcProcess = _funcProcessList[_lfo_on][_funcProcessType];
             activeOperator.setPCMData(pcmData);
             setErst(true);
-        } else if (waveData instanceof SiOPMWaveTable) {
-            SiOPMWaveTable waveTable = ((SiOPMWaveTable) waveData);
+        } else if (waveData instanceof SiOPMWaveTable waveTable) {
             if (waveTable.wavelet != null) {
                 operator[0].setWaveTable(waveTable);
                 if (operator[1] != null) operator[1].setWaveTable(waveTable);
@@ -1926,7 +1925,7 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
     //
 
     // Free list for SiOPMOperator
-    private List<SiOPMOperator> _freeOperators = new ArrayList<SiOPMOperator>();
+    private final List<SiOPMOperator> _freeOperators = new ArrayList<>();
 
     /** Alloc operator instance WITHOUT initializing. Call from SiOPMChannelFM. */
     protected SiOPMOperator _allocFMOperator() {

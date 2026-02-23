@@ -52,7 +52,7 @@ public class SiMMLSequencer extends MMLSequencer {
     /** maximum limit of track count */
     public int _maxTrackCount;
 
-    private SiMMLTable _table;  // table instance
+    private final SiMMLTable _table;  // table instance
 
     private Function<SiMMLTrack, Boolean> _callbackEventNoteOn = null;   // callback function for event trigger "note on"
     private Function<SiMMLTrack, Boolean> _callbackEventNoteOff = null;  // callback function for event trigger "note off"
@@ -61,18 +61,18 @@ public class SiMMLSequencer extends MMLSequencer {
     private BiConsumer<Integer, Integer> _callbackBeat = null;          // callback function for beat event
     private BiPredicate<SiMMLData, Object> _callbackParseSysCmd = null;   // callback function for parsing system command
 
-    private SiOPMModule _module;                // Module instance
-    private MMLExecutorConnector _connector;    // MMLExecutorConnector
+    private final SiOPMModule _module;                // Module instance
+    private final MMLExecutorConnector _connector;    // MMLExecutorConnector
     private SiMMLTrack _currentTrack;           // Current processing track
-    private String[] _macroStrings;      // Macro strings
+    private final String[] _macroStrings;      // Macro strings
     private int _flagMacroExpanded;            // Expanded macro flag to avoid circular reference
-    private int _envelopEventID;                // Event id of first envelop
+    private final int _envelopEventID;                // Event id of first envelop
     private boolean _macroExpandDynamic;        // Macro expantion mode
     private boolean _enableChangeBPM;           // internal flag enable to change bpm
 
-    private int[] _p = new int[PARAM_MAX];  // temporary area to get plural parameters
+    private final int[] _p = new int[PARAM_MAX];  // temporary area to get plural parameters
     private int _internalTableIndex = 0;                     // internal table index
-    private List<SiMMLTrack> _freeTracks;                // SiMMLTracks free list
+    private final List<SiMMLTrack> _freeTracks;                // SiMMLTracks free list
     private boolean _isSequenceFinished;                    // flag sequence finished
 
     private boolean _dummyProcess;              // play dummy process
@@ -172,8 +172,8 @@ public class SiMMLSequencer extends MMLSequencer {
         // initialize
         _table = SiMMLTable.getInstance();
         _module = module;
-        tracks = new ArrayList<SiMMLTrack>();
-        _freeTracks = new ArrayList<SiMMLTrack>();
+        tracks = new ArrayList<>();
+        _freeTracks = new ArrayList<>();
         _processedSampleCount = 0;
         _connector = new MMLExecutorConnector();
         _macroStrings = new String[MACRO_SIZE];
@@ -610,7 +610,7 @@ public class SiMMLSequencer extends MMLSequencer {
         // expand repeat
         Matcher matcher = reprex.matcher(expmml.toString());
 
-        StringBuffer sbuf = new StringBuffer();
+        StringBuilder sbuf = new StringBuilder();
 
         while (matcher.find()) {
 
@@ -744,7 +744,7 @@ public class SiMMLSequencer extends MMLSequencer {
         int charCodeA = 'A';
         Pattern p = Pattern.compile("([A-Z])(\\(([-\\d]+)\\))?");
         Matcher matcher = p.matcher(String.valueOf(m));
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             String arg1 = matcher.group(1);
             String arg2 = matcher.group(2);
@@ -860,15 +860,14 @@ public class SiMMLSequencer extends MMLSequencer {
             }
             case "#REV": {
                 if (noData) dat = pfx;
-                if (dat.isEmpty()) {
-                    setting.octavePolarization = -1;
-                    setting.volumePolarization = -1;
-                } else if (dat.equals("octave")) {
-                    setting.octavePolarization = -1;
-                } else if (dat.equals("volume")) {
-                    setting.volumePolarization = -1;
-                } else {
-                    throw _errorParameterNotValid("#REVERSE", dat);
+                switch (dat) {
+                    case "" -> {
+                        setting.octavePolarization = -1;
+                        setting.volumePolarization = -1;
+                    }
+                    case "octave" -> setting.octavePolarization = -1;
+                    case "volume" -> setting.volumePolarization = -1;
+                    default -> throw _errorParameterNotValid("#REVERSE", dat);
                 }
                 return true;
             }

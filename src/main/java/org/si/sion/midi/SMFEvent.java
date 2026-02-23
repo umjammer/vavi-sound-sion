@@ -13,7 +13,7 @@
 
 package org.si.sion.midi;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -130,12 +130,8 @@ public class SMFEvent {
 
     public void setText(String str) {
         if (byteArray == null) byteArray = new ByteArray();
-        try {
-            byte[] bytes = str.getBytes("UTF-8");
-            byteArray.writeBytes(bytes);
-        } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(SMFEvent.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        byteArray.writeBytes(bytes);
     }
 
     /** toString */
@@ -158,11 +154,11 @@ public class SMFEvent {
                 case PROGRAM_CHANGE:
                     return ret + "PC(" + value + ") ";
                 case SYSTEM_EXCLUSIVE:
-                    String text = "SX:";
+                    StringBuilder text = new StringBuilder("SX:");
                     if (byteArray != null) {
                         byteArray.position = 0;
                         while (byteArray.getBytesAvailable() > 0) {
-                            text += Integer.toHexString(byteArray.readUnsignedByte()) + " ";
+                            text.append(Integer.toHexString(byteArray.readUnsignedByte())).append(" ");
                         }
                     }
                     return ret + text;

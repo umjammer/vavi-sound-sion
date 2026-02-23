@@ -91,7 +91,7 @@ public class Chord extends Scale {
      * The regular expression of name is /(o[0-9])?([A-Ga-g])([+#\-])?([a-z0-9]+)?(,[0-9]+[+#\-]?)?(,[0-9]+[+#\-]?)?/.<br/>
      * The 1st letter means center octave. default octave = 5 (when omit).<br/>
      * The 2nd letter means root note.<br/>
-     * The 3nd letter (option) means note shift sign. "+" and "#" shift +1, "-" shifts -1.<br/>
+     * The 3rd letter (option) means note shift sign. "+" and "#" shift +1, "-" shifts -1.<br/>
      * The 4th letters (option) means ((follows) chord).<br/>
      * <table>
      * <tr><th>the 3rd letters</th><th>chord</th></tr>

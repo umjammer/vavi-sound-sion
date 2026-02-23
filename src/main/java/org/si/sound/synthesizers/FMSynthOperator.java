@@ -13,9 +13,9 @@ public class FMSynthOperator {
 
     // variables
     //
-    private FMSynth _owner;
-    private int _opeIndex;
-    private SiOPMOperatorParam _param;
+    private final FMSynth _owner;
+    private final int _opeIndex;
+    private final SiOPMOperatorParam _param;
 
     // properties
     //

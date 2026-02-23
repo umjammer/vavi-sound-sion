@@ -219,12 +219,12 @@ public class SoundLoader extends EventDispatcher {
      */
     public int loadAll() {
         int count = 0;
-        for (int i = 0; i < _preserveList.size(); i++) {
-            if (_preserveList.get(i).getData() == null) {
-                _preserveList.get(i).load();
+        for (SoundLoaderFileData soundLoaderFileData : _preserveList) {
+            if (soundLoaderFileData.getData() == null) {
+                soundLoaderFileData.load();
                 count++;
             } else {
-                _preserveList.get(i).dispatchEvent(new Event(Event.COMPLETE, false, false));
+                soundLoaderFileData.dispatchEvent(new Event(Event.COMPLETE, false, false));
             }
         }
         _preserveList.clear();

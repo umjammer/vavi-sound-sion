@@ -75,7 +75,7 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
     public String toString() {
         String str = "SiOPMChannelPCM : \n";
         str += $2("vol", _volumes[0], "pan", _pan - 64);
-        str += String.valueOf(operator) + "\n";
+        str += operator + "\n";
         return str;
     }
 

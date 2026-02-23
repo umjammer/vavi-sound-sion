@@ -30,11 +30,11 @@ public class SiOPMChannelManager {
     //
 
     /** class instance of SiOPMChannelBase */
-    private Class<?> _channelClass;
+    private final Class<?> _channelClass;
     /** channel type */
-    private int _channelType;
+    private final int _channelType;
     /** terminator */
-    private SiOPMChannelBase _term;
+    private final SiOPMChannelBase _term;
     /** channel count */
     private int _length;
 

@@ -14,7 +14,7 @@ import org.si.sound.synthesizers.VoiceReference;
 
 
 /**
- * Polyphonic synthesizer class provides synthesizer with multi tracks.
+ * Polyphonic synthesizer class provides synthesizer with multitracks.
  */
 public class PolyphonicSynthesizer extends MultiTrackSoundObject {
 
@@ -49,7 +49,7 @@ public class PolyphonicSynthesizer extends MultiTrackSoundObject {
     @Override
     public void play() {
         _stopAllTracks();
-        _tracks = new ArrayList<SiMMLTrack>();
+        _tracks = new ArrayList<>();
     }
 
     /** stop all tracks */

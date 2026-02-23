@@ -22,7 +22,7 @@ public class MonophonicSynthesizer extends PatternSequencer {
     //
 
     /** note object to sound on the beat */
-    private Note _noteObject;
+    private final Note _noteObject;
 
     // properties
     //

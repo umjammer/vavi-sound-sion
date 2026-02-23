@@ -21,7 +21,7 @@ import org.si.sound.patterns.Sequencer;
 /** @eventType org.si.sound.events.SoundObjectEvent.ENTER_SEGMENT */
 // [Event(name="enterSegment", type="org.si.sound.events.SoundObjectEvent")]
 
-/** Chord pad provides polyphonic synthesizer controled by chord and rhythm pattern. */
+/** Chord pad provides polyphonic synthesizer controlled by chord and rhythm pattern. */
 public class ChordPad extends MultiTrackSoundObject {
 
     // constants
@@ -197,7 +197,7 @@ public class ChordPad extends MultiTrackSoundObject {
         }
 
         _nextPattern = null;
-        _pattern = new ArrayList<Note>();
+        _pattern = new ArrayList<>();
         _changePatternOnSegment = changePatternOnSegment;
 
         _updateChordNotes();
@@ -233,10 +233,10 @@ public class ChordPad extends MultiTrackSoundObject {
     @Override
     public void stop() {
         if (_tracks != null) {
-            for (int i = 0; i < _operators.size(); i++) {
-                _operators.get(i).stop();
-                _operators.get(i).onEnterFrame = null;
-                _operators.get(i).onEnterSegment = null;
+            for (Sequencer operator : _operators) {
+                operator.stop();
+                operator.onEnterFrame = null;
+                operator.onEnterSegment = null;
             }
             _synthesizer._unregisterTracks(_tracks.get(0), _tracks.size());
             for (SiMMLTrack t : _tracks) t.setDisposable();

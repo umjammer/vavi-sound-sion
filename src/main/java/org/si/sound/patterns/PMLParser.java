@@ -61,10 +61,7 @@ public class PMLParser {
 
             int rep = repStr.isEmpty() ? 2 : Integer.parseInt(repStr);
 
-            StringBuilder sb = new StringBuilder(group.length() * rep);
-            sb.append(group.repeat(Math.max(0, rep)));
-
-            pml = matcher.replaceFirst(Matcher.quoteReplacement(sb.toString()));
+            pml = matcher.replaceFirst(Matcher.quoteReplacement(group.repeat(Math.max(0, rep))));
         }
         int imax = pml.length();
         Note[] pattern = new Note[imax];

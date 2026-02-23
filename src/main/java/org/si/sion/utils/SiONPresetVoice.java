@@ -37,7 +37,7 @@ import org.si.sion.utils.SiONPresetVoice.SiONVoiceList;
  * Object[] bassVoiceList = voices["valsound.bass"];  // access voice list by categoly key
  * SiONVoice bass10 = bassVoiceList[10];           // access voice by index
  * </pre>
- * Or you can access Array list by categories property.
+ * Or you can access Array list by categories' property.
  * <pre>
  * SiONPresetVoice voices = new SiONPresetVoice(); // create new instance.
  * Object[] voiceList = voices.categories[2];         // access voice list by categoly index

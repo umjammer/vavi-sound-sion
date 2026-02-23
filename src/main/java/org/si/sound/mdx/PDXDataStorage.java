@@ -26,7 +26,7 @@ public class PDXDataStorage {
 
     /** Clear. */
     public void clear() {
-        for (String key : self.keySet()) self.put(key, null);
+        self.replaceAll((k, v) -> null);
     }
 
     /** load pdx data from url */

@@ -56,47 +56,30 @@ public class MDXEvent {
     /** toString */
     public String toString() {
         int i;
-        switch (type) {
-            case REST:
-                return "r ;" + deltaClock;
-            case NOTE:
+        return switch (type) {
+            case REST -> "r ;" + deltaClock;
+            case NOTE -> {
                 i = (data + 15) % 12;
-                return "o" + (((data + 15) / 12) >> 0) + _noteText[i] + ";" + deltaClock;
-            case GATE:
-                return "q" + data;
-            case DETUNE:
-                return "k" + (data >> 8);
-            case REPEAT_BEGIN:
-                return "[" + data;
-            case REPEAT_BREAK:
-                return "|";
-            case REPEAT_END:
-                return "]";
-            case PORTAMENT:
-                return "po";
-            case SLUR:
-                return "&";
-            case VOICE:
-                return "@" + data;
-            case PAN:
-                return "p" + data;
-            case VOLUME:
-                return (data < 16) ? "v" + data : "@v" + (data & 127);
-            case LFO_DELAY:
-                return "LFO_delay" + data;
-            case PITCH_LFO:
-                return "LFO" + (data & 255) + " mp" + (data >> 8) + "," + (data2);
-            case VOLUME_LFO:
-                return "LFO" + (data & 255) + " ma" + (data >> 8) + "," + (data2);
-            case FREQUENCY:
-                return "FREQ" + data;
-            case TIMERB:
-                return "TIMER_B " + data;
-            case SET_PCM8:
-                return "PCM8";
-            default:
-                return "#" + type + "; " + String.valueOf(data);
-        }
+                yield "o" + (((data + 15) / 12) >> 0) + _noteText[i] + ";" + deltaClock;
+            }
+            case GATE -> "q" + data;
+            case DETUNE -> "k" + (data >> 8);
+            case REPEAT_BEGIN -> "[" + data;
+            case REPEAT_BREAK -> "|";
+            case REPEAT_END -> "]";
+            case PORTAMENT -> "po";
+            case SLUR -> "&";
+            case VOICE -> "@" + data;
+            case PAN -> "p" + data;
+            case VOLUME -> (data < 16) ? "v" + data : "@v" + (data & 127);
+            case LFO_DELAY -> "LFO_delay" + data;
+            case PITCH_LFO -> "LFO" + (data & 255) + " mp" + (data >> 8) + "," + (data2);
+            case VOLUME_LFO -> "LFO" + (data & 255) + " ma" + (data >> 8) + "," + (data2);
+            case FREQUENCY -> "FREQ" + data;
+            case TIMERB -> "TIMER_B " + data;
+            case SET_PCM8 -> "PCM8";
+            default -> "#" + type + "; " + data;
+        };
     }
 
     // constructor

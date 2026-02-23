@@ -235,7 +235,7 @@ class SiFilterVowelFormant {
     private static double[][] _alphaTable = null;
     private static double[] _cosTable = null;
     private static double[] _gainTable = null;
-    private static double[] _ibandList = {0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4};
+    private static final double[] _ibandList = {0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4};
 
     public static void initialize() {
         if (_alphaTable == null) {

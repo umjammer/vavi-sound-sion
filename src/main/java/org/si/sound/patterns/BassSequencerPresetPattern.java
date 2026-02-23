@@ -74,7 +74,7 @@ public class BassSequencerPresetPattern {
     //
 
     // set pattern
-    private PMLParser _pp = new PMLParser(Map.of(
+    private final PMLParser _pp = new PMLParser(Map.of(
             "A", new Note(33, 128, 1, -1, Double.NaN, null),
             "a", new Note(33, 64, 1, -1, Double.NaN, null),
             "H", new Note(45, 128, 1, -1, Double.NaN, null),

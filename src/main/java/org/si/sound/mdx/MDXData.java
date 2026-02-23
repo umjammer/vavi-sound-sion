@@ -35,7 +35,7 @@ public class MDXData extends AbstractLoader {
     public MDXTrack[] tracks = new MDXTrack[16];
     public MDXExecutor[] executors = new MDXExecutor[16];
 
-    private SiONVoice _noiseVoice;
+    private final SiONVoice _noiseVoice;
     private int _noiseVoiceNumber;
     private double _currentBPM;
     private MMLSequence _globalSequence;

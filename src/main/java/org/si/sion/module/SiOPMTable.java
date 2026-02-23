@@ -14,10 +14,10 @@ public class SiOPMTable {
 
     // constants
     //
-    public static final int ENV_BITS = 10;   // Envelop output bit size
+    public static final int ENV_BITS = 10;   // Envelop output a bit size
     public static final int ENV_TIMER_BITS = 24;   // Envelop timer resolution bit size
     public static final int SAMPLING_TABLE_BITS = 10;   // sine wave table entries = 2 ^ SAMPLING_TABLE_BITS = 1024
-    public static final int HALF_TONE_BITS = 6;    // half tone resolution    = 2 ^ HALF_TONE_BITS      = 64
+    public static final int HALF_TONE_BITS = 6;    // halftone resolution    = 2 ^ HALF_TONE_BITS      = 64
     public static final int NOTE_BITS = 7;    // max note value          = 2 ^ NOTE_BITS           = 128
     public static final int NOISE_TABLE_BITS = 15;   // 32k noise
     public static final int LOG_TABLE_RESOLUTION = 256;  // log table resolution    = LOG_TABLE_RESOLUTION for every 1/2 scaling.
@@ -99,7 +99,7 @@ public class SiOPMTable {
     public static final int PG_USER_PCM = -2;    // -2 user registered pcm data
 
     public static final int DEFAULT_PG_MAX = 256;   // max value of pgType = 255
-    public static final int PG_FILTER = 511;   // pg number loops between 0 to 511
+    public static final int PG_FILTER = 511;   // pg number loops between 0 and 511
 
     public static final int WAVE_TABLE_MAX = 128;                // custom wave table max.
     public static final int PCM_DATA_MAX = 128;                // pcm data max.
@@ -320,19 +320,19 @@ public class SiOPMTable {
 
         i = 0;
         for (; i < 44; i++) {                // rate = 0-43
-            eg_timerSteps[i] = (int) ((1 << (i >> 2)) * clock_ratio);
+            eg_timerSteps[i] = (1 << (i >> 2)) * clock_ratio;
             eg_tableSelector[i] = (i & 3);
         }
         for (; i < 48; i++) {                // rate = 44-47
-            eg_timerSteps[i] = (int) (2047 * clock_ratio);
+            eg_timerSteps[i] = 2047 * clock_ratio;
             eg_tableSelector[i] = (i & 3);
         }
         for (; i < 60; i++) {                // rate = 48-59
-            eg_timerSteps[i] = (int) (2047 * clock_ratio);
+            eg_timerSteps[i] = 2047 * clock_ratio;
             eg_tableSelector[i] = i - 44;
         }
         for (; i < 96; i++) {                // rate = 60-95 (rate=60-95 are same as rate=63(maximum))
-            eg_timerSteps[i] = (int) (2047 * clock_ratio);
+            eg_timerSteps[i] = 2047 * clock_ratio;
             eg_tableSelector[i] = 16;
         }
         for (; i < 128; i++) {                // rate = 96-127 (dummies for ar,dr,sr=0)
@@ -637,7 +637,7 @@ public class SiOPMTable {
         // zero fill area
         imax = logTable.length;
         for (i = jmax; i < imax; i++) {
-            logTable[i] = (int) (0);
+            logTable[i] = 0;
         }
     }
 

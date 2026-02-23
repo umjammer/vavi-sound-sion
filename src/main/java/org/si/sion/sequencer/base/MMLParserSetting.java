@@ -73,7 +73,7 @@ public class MMLParserSetting {
     public void setDefaultOctave(int o) {
         _defaultOctave = o;
         _mml2nn = 60 - _defaultOctave * 12;
-        int octaveLimit = (int) ((128 - _mml2nn) / 12) - 1;
+        int octaveLimit = ((128 - _mml2nn) / 12) - 1;
         if (maxOctave > octaveLimit) maxOctave = octaveLimit;
     }
 

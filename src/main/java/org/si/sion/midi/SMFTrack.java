@@ -27,16 +27,16 @@ public class SMFTrack {
     //
 
     /** sequence */
-    public Vector<SMFEvent> sequence = new Vector<SMFEvent>();
+    public Vector<SMFEvent> sequence = new Vector<>();
     /** total time in MIDI clock */
     public int totalTime;
 
     // parent SMFData
-    private SMFData _smfData;
+    private final SMFData _smfData;
     // for exiting loop
     private boolean _exitLoop;
     // track index (start from 1)
-    private int _trackIndex;
+    private final int _trackIndex;
 
     // properties
     //
@@ -49,13 +49,13 @@ public class SMFTrack {
     /** toString */
     @Override
     public String toString() {
-        String text = totalTime + "\n";
+        StringBuilder text = new StringBuilder(totalTime + "\n");
 
-        for (int i = 0; i < sequence.size(); i++) {
-            text += sequence.get(i).toString() + "\n";
+        for (SMFEvent smfEvent : sequence) {
+            text.append(smfEvent.toString()).append("\n");
         }
 
-        return text;
+        return text.toString();
     }
 
     // constructor

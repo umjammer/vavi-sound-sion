@@ -126,30 +126,15 @@ public class SiONVoice extends SiMMLVoice implements ISiOPMWaveInterface {
 
     public String getMML(int index, String type, boolean appendPostfixMML) {
         if (type == null) type = chipType;
-        String mml = "";
-        switch (type) {
-            case "OPL":
-                mml = "#OPL@" + index + Translator.mmlOPLParam(channelParam, " ", "\n", name);
-                break;
-            case "OPM":
-                mml = "#OPM@" + index + Translator.mmlOPMParam(channelParam, " ", "\n", name);
-                break;
-            case "OPN":
-                mml = "#OPN@" + index + Translator.mmlOPNParam(channelParam, " ", "\n", name);
-                break;
-            case "OPX":
-                mml = "#OPX@" + index + Translator.mmlOPXParam(channelParam, " ", "\n", name);
-                break;
-            case "MA3":
-                mml = "#MA@" + index + Translator.mmlMA3Param(channelParam, " ", "\n", name);
-                break;
-            case "AnalogLike":
-                mml = "#AL@" + index + Translator.mmlALParam(channelParam, " ", "\n", name);
-                break;
-            default:
-                mml = "#@" + index + Translator.mmlParam(channelParam, " ", "\n", name);
-                break;
-        }
+        String mml = switch (type) {
+            case "OPL" -> "#OPL@" + index + Translator.mmlOPLParam(channelParam, " ", "\n", name);
+            case "OPM" -> "#OPM@" + index + Translator.mmlOPMParam(channelParam, " ", "\n", name);
+            case "OPN" -> "#OPN@" + index + Translator.mmlOPNParam(channelParam, " ", "\n", name);
+            case "OPX" -> "#OPX@" + index + Translator.mmlOPXParam(channelParam, " ", "\n", name);
+            case "MA3" -> "#MA@" + index + Translator.mmlMA3Param(channelParam, " ", "\n", name);
+            case "AnalogLike" -> "#AL@" + index + Translator.mmlALParam(channelParam, " ", "\n", name);
+            default -> "#@" + index + Translator.mmlParam(channelParam, " ", "\n", name);
+        };
         if (appendPostfixMML) {
             String postfix = Translator.mmlVoiceSetting(this);
             if (!postfix.isEmpty()) mml += "\n" + postfix;
