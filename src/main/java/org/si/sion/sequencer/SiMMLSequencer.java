@@ -350,8 +350,9 @@ public class SiMMLSequencer extends MMLSequencer {
         }
 
         if (tracks.size() < _maxTrackCount) {
-            var x = _freeTracks.remove(_freeTracks.size() - 1);
-            trk = x != null ? x : new SiMMLTrack();
+            if (!_freeTracks.isEmpty()) trk = _freeTracks.remove(_freeTracks.size() - 1);
+            else trk = null;
+            if (trk == null) trk = new SiMMLTrack();
             trk._trackNumber = tracks.size();
             tracks.add(trk);
         } else {
@@ -425,10 +426,10 @@ public class SiMMLSequencer extends MMLSequencer {
 
             while (seq != null) {
                 if (seq.isActive) {
-                    var x = _freeTracks.remove(_freeTracks.size() - 1);
-                    trk = x != null ?  x : new SiMMLTrack();
+                    SiMMLTrack x = _freeTracks.isEmpty() ? null : _freeTracks.remove(_freeTracks.size() - 1);
+                    trk = x != null ? x : new SiMMLTrack();
                     internalTrackID = idx | SiMMLTrack.MML_TRACK;
-                    tracks.set(idx, trk._initialize(seq, mmlData.defaultFPS, internalTrackID, _callbackEventNoteOn, _callbackEventNoteOff, true));
+                    tracks.add(trk._initialize(seq, mmlData.defaultFPS, internalTrackID, _callbackEventNoteOn, _callbackEventNoteOff, true));
                     tracks.get(idx)._trackNumber = idx;
                     idx++;
                 }
@@ -530,15 +531,12 @@ public class SiMMLSequencer extends MMLSequencer {
     @Override
     protected String onBeforeCompile(String mml) {
         int codeA = 'A';
-        int codeH = '-';
-        Pattern comrex = Pattern.compile("/\\*.*?\\*/|//.*?[\\r\\n]+");
-        Pattern reprex = Pattern.compile("!\\[(\\d*)(.*?)(!\\|(.*?))?!\\\\](\\d*)");
-        Pattern seqrex = Pattern.compile("[ \\t\\r\\n]*(#([A-Z@\\-]+)(\\+=|=)?)?([^;{]*(\\{.*?})?[^;]*);"); //}
-        Pattern midrex = Pattern.compile("([A-Z])?(-([A-Z])?)?");
+        Pattern comrex = Pattern.compile("/\\*.*?\\*/|//.*?[\\r\\n]+", Pattern.DOTALL);
+        Pattern reprex = Pattern.compile("!\\[(\\d*)(.*?)(!\\|(.*?))?!\\\\](\\d*)", Pattern.DOTALL);
+        Pattern seqrex = Pattern.compile("[ \\t\\r\\n]*(#([A-Z@\\-]+)(\\+=|=)?)?([^;{]*(\\{.*?})?[^;]*);", Pattern.DOTALL); //}
+        Pattern midrex = Pattern.compile("([A-Z])?(?:-([A-Z])?)?");
         StringBuilder expmml;
-        Matcher res;
-        Matcher midres;
-        int c, i;
+        int i;
         char str1;
         String str2;
         boolean concat;
@@ -549,7 +547,7 @@ public class SiMMLSequencer extends MMLSequencer {
 
         // remove comments
         mml += "\n";
-        mml = mml.replace(comrex.pattern(), "");
+        mml = comrex.matcher(mml).replaceAll("");
 
         // format last
         i = mml.length();
@@ -562,8 +560,8 @@ public class SiMMLSequencer extends MMLSequencer {
 
         // expand macros
         expmml = new StringBuilder();
-        res = seqrex.matcher(mml);
-        while (res.matches()) {
+        Matcher res = seqrex.matcher(mml);
+        while (res.find()) {
             // normal sequence
             if (res.group(1) == null) {
                 expmml.append(_expandMacro(res.group(4), false)).append(";");
@@ -587,11 +585,12 @@ public class SiMMLSequencer extends MMLSequencer {
                     str2 = String.valueOf(res.group(2));
                     concat = (res.group(3).equals("+="));
                     // parse macro IDs
-//                    midrex.lastIndex = 0;
-                    midres = midrex.matcher(str2);
-                    while (midres.group(0) != null) {
-                        startID = (midres.group(1) != null) ? (String.valueOf(midres.group(1)).charAt(0) - codeA) : 0;
-                        endID = (midres.group(2) != null) ? ((midres.group(3) != null) ? (midres.group(3).charAt(0) - codeA) : MACRO_SIZE - 1) : startID;
+                    Matcher midres = midrex.matcher(str2);
+                    while (midres.find()) {
+                        String range = midres.group(0);
+                        if (range == null || range.isEmpty()) break;
+                        startID = (midres.group(1) != null) ? (midres.group(1).charAt(0) - codeA) : 0;
+                        endID = (range.contains("-")) ? ((midres.group(2) != null) ? (midres.group(2).charAt(0) - codeA) : MACRO_SIZE - 1) : startID;
                         for (i = startID; i <= endID; i++) {
                             if (concat) {
                                 _macroStrings[i] += (_macroExpandDynamic) ? res.group(4) : _expandMacro(res.group(4), false);
@@ -599,12 +598,8 @@ public class SiMMLSequencer extends MMLSequencer {
                                 _macroStrings[i] = (_macroExpandDynamic) ? res.group(4) : _expandMacro(res.group(4), false);
                             }
                         }
-                        midres = midrex.matcher(str2);
                     }
                 }
-
-            // next
-            res = seqrex.matcher(mml);
         }
 
         // expand repeat

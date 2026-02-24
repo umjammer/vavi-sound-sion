@@ -171,7 +171,8 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
     @Override
     public void setFrequencyRatio(int ratio) {
         _freq_ratio = ratio;
-        double r = (ratio != 0) ? (100 / ratio) : 1;
+        // Keep ratio conversion in floating-point; integer division collapses EG/LFO timing to zero.
+        double r = (ratio != 0) ? (100.0 / ratio) : 1;
         _eg_timer_initial = (int) (SiOPMTable.ENV_TIMER_INITIAL * r);
         _lfo_timer_initial = (int) (SiOPMTable.LFO_TIMER_INITIAL * r);
     }
@@ -325,16 +326,16 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
      */
     public void setSiOPMParameters(int ar, int dr, int sr, int rr, int sl, int tl, int ksr, int ksl, int mul, int dt1, int detune, int ams, int phase, int fixNote) {
         SiOPMOperator ope = activeOperator;
-        if (ar != Integer.MIN_VALUE) ope._ar = ar;
-        if (dr != Integer.MIN_VALUE) ope._dr = dr;
-        if (sr != Integer.MIN_VALUE) ope._sr = sr;
-        if (rr != Integer.MIN_VALUE) ope._rr = rr;
-        if (sl != Integer.MIN_VALUE) ope._sl = sl;
-        if (tl != Integer.MIN_VALUE) ope._tl = tl;
-        if (ksr != Integer.MIN_VALUE) ope._ks = ksr;
-        if (ksl != Integer.MIN_VALUE) ope._ksl = ksl;
+        if (ar != Integer.MIN_VALUE) ope.setAr(ar);
+        if (dr != Integer.MIN_VALUE) ope.setDr(dr);
+        if (sr != Integer.MIN_VALUE) ope.setSr(sr);
+        if (rr != Integer.MIN_VALUE) ope.setRr(rr);
+        if (sl != Integer.MIN_VALUE) ope.setSl(sl);
+        if (tl != Integer.MIN_VALUE) ope.setTl(tl);
+        if (ksr != Integer.MIN_VALUE) ope.setKs(ksr);
+        if (ksl != Integer.MIN_VALUE) ope.setKsl(ksl);
         if (mul != Integer.MIN_VALUE) ope.setMul(mul);
-        if (dt1 != Integer.MIN_VALUE) ope._dt1 = dt1;
+        if (dt1 != Integer.MIN_VALUE) ope.setDt1(dt1);
         if (detune != Integer.MIN_VALUE) ope.setDetune(detune);
         if (ams != Integer.MIN_VALUE) ope.setAms(ams);
         if (phase != Integer.MIN_VALUE) ope.setKeyOnPhase(phase);
@@ -452,27 +453,27 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
                     op = operator[new int[] {0, 2, 1, 3}[(addr >> 3) & 3]]; // [3,1,2,0]
                     switch ((addr - 0x40) >> 5) {
                         case 0: // DT1:6-4 MUL:3-0
-                            op._dt1 = (data >> 4) & 7;
+                            op.setDt1((data >> 4) & 7);
                             op.setMul((data) & 15);
                             break;
                         case 1: // TL:6-0
-                            op._tl = data & 127;
+                            op.setTl(data & 127);
                             break;
                         case 2: // KS:76 AR:4-0
-                            op._ks = (data >> 6) & 3;
-                            op._ar = (data & 31) << 1;
+                            op.setKs((data >> 6) & 3);
+                            op.setAr((data & 31) << 1);
                             break;
                         case 3: // AMS:7 DR:4-0
-                            op._ams = ((data >> 7) & 1) << 1;
-                            op._dr = (data & 31) << 1;
+                            op.setAms(((data >> 7) & 1) << 1);
+                            op.setDr((data & 31) << 1);
                             break;
                         case 4: // DT2:76 SR:4-0
                             op.setDetune(new int[] {0, 384, 500, 608}[(data >> 6) & 3]);
-                            op._sr = (data & 31) << 1;
+                            op.setSr((data & 31) << 1);
                             break;
                         case 5: // SL:7-4 RR:3-0
-                            op._sl = (data >> 4) & 15;
-                            op._rr = (data & 15) << 2;
+                            op.setSl((data >> 4) & 15);
+                            op.setRr((data & 15) << 2);
                             break;
                     }
                 }
@@ -562,7 +563,7 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
         SiOPMOperator ope;
         for (i = 0; i < _operatorCount; i++) {
             ope = operator[i];
-            if (ope._final) ope._ar = ar;
+            if (ope._final) ope.setAr(ar);
         }
     }
 
@@ -573,7 +574,7 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
         SiOPMOperator ope;
         for (i = 0; i < _operatorCount; i++) {
             ope = operator[i];
-            if (ope._final) ope._rr = rr;
+            if (ope._final) ope.setRr(rr);
         }
     }
 
@@ -603,13 +604,13 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
     /** release rate (&#64;rr) */
     @Override
     public void setRr(int i) {
-        activeOperator._rr = i;
+        activeOperator.setRr(i);
     }
 
     /** total level (&#64;tl) */
     @Override
     public void setTl(int i) {
-        activeOperator._tl = i;
+        activeOperator.setTl(i);
     }
 
     /** fine multiple (&#64;ml) */
@@ -1925,11 +1926,11 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
     //
 
     // Free list for SiOPMOperator
-    private final List<SiOPMOperator> _freeOperators = new ArrayList<>();
+    private static final List<SiOPMOperator> _freeOperators = new ArrayList<>();
 
     /** Alloc operator instance WITHOUT initializing. Call from SiOPMChannelFM. */
     protected SiOPMOperator _allocFMOperator() {
-        var x = _freeOperators.remove(_freeOperators.size() - 1);
+        SiOPMOperator x = _freeOperators.isEmpty() ? null : _freeOperators.remove(_freeOperators.size() - 1);
         return x != null ? x : new SiOPMOperator(_chip);
     }
 

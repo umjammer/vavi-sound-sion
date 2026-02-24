@@ -390,7 +390,7 @@ public class SiEffectModule {
     // functor
     //
     private SiEffectStream _allocStream(int depth) {
-        var x = _freeEffectStreams.remove(_freeEffectStreams.size() - 1);
+        SiEffectStream x = _freeEffectStreams.isEmpty() ? null : _freeEffectStreams.remove(_freeEffectStreams.size() - 1);
         SiEffectStream es = x != null ? x : new SiEffectStream(_module, null);
         es.initialize(depth);
         return es;

@@ -157,7 +157,7 @@ public class MDXData extends AbstractLoader {
     /** Load MDX data from byteArray. */
     public MDXData loadBytes(ByteArray bytes) {
         _loadBytes(bytes);
-        eventSupport.dispatchEvent(new Event(Event.COMPLETE));
+        dispatchEvent(new Event(Event.COMPLETE));
         return this;
     }
 

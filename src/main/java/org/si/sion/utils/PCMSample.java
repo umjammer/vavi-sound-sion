@@ -16,18 +16,16 @@ import org.si.utils.ByteArray;
 import org.si.utils.ByteArrayExt;
 import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
-import org.si.utils.EventSupport;
+import org.si.utils.EventDispatcher;
 
 import static org.si.utils.ByteArray.LITTLE_ENDIAN;
 
 
 /** PCM sample loader/saver */
-public class PCMSample {
+public class PCMSample extends EventDispatcher {
 
     // variables
     //
-
-    EventSupport eventSupport = new EventSupport();
 
     /** You should not change this property into "acid" ! */
     public static String basicInfoChunkID = "sinf";
@@ -333,13 +331,13 @@ public class PCMSample {
         header = (Map<String, Object>) bae.readChunk(content, 0, null);
         String chunkID = header != null ? (String) header.get("chunkID") : null;
         String listType = header != null ? (String) header.get("listType") : null;
-        if (!"RIFF".equals(chunkID) || !"WAVE".equals(listType)) eventSupport.dispatchEvent(new ErrorEvent("Not good wave file"));
+        if (!"RIFF".equals(chunkID) || !"WAVE".equals(listType)) dispatchEvent(new ErrorEvent("Not good wave file"));
         else {
             fileSize = (Integer) header.get("length");
             Map<String, Object> chunks = content.readAllChunks();
             _waveDataChunks = chunks;
             if (!(chunks.containsKey("fmt ") && chunks.containsKey("data")))
-                eventSupport.dispatchEvent(new ErrorEvent("Not good wave file"));
+                dispatchEvent(new ErrorEvent("Not good wave file"));
             else {
                 chunkBAE = (ByteArrayExt) chunks.get("fmt ");
                 _waveDataFormatID = chunkBAE.readShort();
@@ -363,7 +361,7 @@ public class PCMSample {
                 }
 
                 _updateSampleFromWaveData();
-                eventSupport.dispatchEvent(new Event(Event.COMPLETE));
+                dispatchEvent(new Event(Event.COMPLETE));
             }
         }
         return this;

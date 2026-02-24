@@ -570,8 +570,8 @@ public class SiOPMOperator {
 
     /** Set parameters by SiOPMOperatorParam */
     public void setSiOPMOperatorParam(SiOPMOperatorParam param) {
-        _pgType = param.pgType;
-        _ptType = param.ptType;
+        setPgType(param.pgType);
+        setPtType(param.ptType);
 
         if (param.phase == 255) _keyon_phase = -2;
         else if (param.phase == -1) _keyon_phase = -1;
@@ -607,9 +607,9 @@ public class SiOPMOperator {
         _eg_key_scale_level_rshift = (_ksl == 0) ? 8 : (5 - _ksl);
         // ar for ssgec
         _eg_ssgec_ar = (_ssg_type == 8 || _ssg_type == 12) ? ((_ar >= 56) ? 1 : 0) : ((_ar >= 60) ? 1 : 0);
-        // sl,tl requires some special calculation
-        _sl = param.sl & 15;
-        _tl = param.tl;
+        // sl/tl require recalculating EG sustain and total levels.
+        setSl(param.sl & 15);
+        setTl(param.tl);
 
         _updatePitch();
     }
@@ -625,12 +625,12 @@ public class SiOPMOperator {
         param.rr = _rr;
         param.sl = _sl;
         param.tl = _tl;
-        param.ksr = _ks;
+        param.ksr = getKs();
         param.ksl = _ksl;
         param.fmul = getFmul();
         param.dt1 = _dt1;
         param.detune = getDetune();
-        param.ams = _ams;
+        param.ams = getAms();
         param.ssgec = getSsgec();
         param.phase = getKeyOnPhase();
         param.modLevel = (_fmShift > 10) ? (_fmShift - 10) : 0;
@@ -642,7 +642,7 @@ public class SiOPMOperator {
         _pgType = SiOPMTable.PG_USER_CUSTOM; // -1
         _waveTable = waveTable.wavelet;
         _waveFixedBits = waveTable.fixedBits;
-        _ptType = waveTable.defaultPTType;
+        setPtType(waveTable.defaultPTType);
     }
 
     /** Set PCM data. */
@@ -656,7 +656,7 @@ public class SiOPMOperator {
             _pcm_endPoint = pcmData.getEndPoint();
             _pcm_loopPoint = pcmData.getLoopPoint();
             _keyon_phase = _pcm_startPoint << PCM_waveFixedBits;
-            _ptType = SiOPMTable.PT_PCM;
+            setPtType(SiOPMTable.PT_PCM);
         } else {
             // quick initialization for SiOPMChannelPCM
             _pcm_endPoint = _pcm_loopPoint = 0;

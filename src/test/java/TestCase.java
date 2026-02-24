@@ -15,6 +15,14 @@ import javax.sound.sampled.SourceDataLine;
 import org.si.sion.SiONDriver;
 import org.si.sion.midi.SMFData;
 import org.si.utils.ByteArray;
+import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static vavi.sound.SoundUtil.volume;
 
 
 /**
@@ -23,13 +31,34 @@ import org.si.utils.ByteArray;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2026-02-23 nsano initial version <br>
  */
-public class TestCase {
+@PropsEntity(url = "file:local.properties")
+class TestCase {
 
-    public static void main(String[] args) throws Exception {
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "vavi.test.volume")
+    double volume = 0.2;
+
+    @Property
+    String smf;
+
+    @BeforeEach
+    void setup() throws Exception {
+        if (localPropertiesExists()) {
+            PropsEntity.Util.bind(this);
+        }
+
+Debug.print("volume: " + volume);
+    }
+
+    @Test
+    void test1() throws Exception {
         SiONDriver driver = new SiONDriver(2048, 2, 44100, 0);
 
-        if (args.length > 0) {
-            byte[] bytes = Files.readAllBytes(Paths.get(args[0]));
+        if (smf != null) {
+            byte[] bytes = Files.readAllBytes(Paths.get(smf));
             ByteArray byteArray = new ByteArray();
             byteArray.writeBytes(bytes);
             SMFData smfData = new SMFData();
@@ -42,6 +71,7 @@ public class TestCase {
         AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
         SourceDataLine line = AudioSystem.getSourceDataLine(format);
         line.open(format, driver.getBufferLength() * 4);
+        volume(line, volume);
         line.start();
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -66,20 +96,20 @@ public class TestCase {
                     line.write(out, 0, out.length);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Debug.printStackTrace(e);
             } finally {
                 line.drain();
                 line.close();
             }
         });
 
-        System.out.println("Playing... Press Ctrl+C to stop.");
+        Debug.println("Playing... Press Ctrl+C to stop.");
         while (!driver.sequencer.getIsSequenceFinished()) {
             Thread.sleep(100);
         }
 
         Thread.sleep(500);
         executor.shutdown();
-        System.out.println("Finished.");
+        Debug.println("Finished.");
     }
 }

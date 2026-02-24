@@ -52,8 +52,6 @@ public class SiONPresetVoice  {
         public SiONVoiceList(String name) {
             this.name = name;
         }
-        public SiONVoiceList() {
-        }
     }
 
     // constants
@@ -156,6 +154,7 @@ public class SiONPresetVoice  {
     }
 }
 
+/** */
 class Initializer {
 
     protected SiONPresetVoice parent;
@@ -824,6 +823,7 @@ class OPN extends Initializer {
         parent.self.put(key, voice);
     }
 
+    // 258 voices from valsound
     @Override
     void init() {
         _initChunk1();
@@ -1147,9 +1147,5 @@ class OPN extends Initializer {
         _OPN("valsound.world5", "Shamisen 2", 3, 7, 31, 16, 6, 7, 2, 33, 0, 1, 3, 0, 31, 16, 6, 7, 4, 18, 2, 6, 0, 0, 31, 6, 6, 7, 1, 40, 0, 1, 7, 0, 31, 15, 6, 7, 5, 0, 0, 2, 0, 0);
         _OPN("valsound.world6", "Shamisen 1", 2, 7, 31, 16, 6, 7, 2, 33, 0, 1, 3, 0, 31, 16, 6, 7, 4, 18, 2, 8, 0, 0, 31, 6, 6, 7, 1, 40, 0, 1, 7, 0, 31, 15, 6, 7, 5, 0, 0, 2, 0, 0);
         _OPN("valsound.world7", "Synth Shamisen", 2, 7, 31, 16, 6, 7, 1, 33, 0, 1, 3, 0, 31, 16, 6, 7, 4, 18, 2, 7, 0, 0, 31, 6, 6, 7, 0, 40, 0, 1, 7, 0, 31, 15, 6, 7, 2, 0, 0, 2, 0, 0);
-
-        // 258 voices from valsound
-    
     }
-
 }

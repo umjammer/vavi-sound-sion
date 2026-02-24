@@ -1089,7 +1089,7 @@ public class SiMMLTrack {
 
             // change filter
             if (_env_filter != null && --_cnt_filter == 0) {
-                channel.offsetFilter(_env_filter.i);
+                channel.setFilterOffset(_env_filter.i);
                 _env_filter = _env_filter.next;
                 _cnt_filter = _max_cnt_filter;
             }
@@ -1155,7 +1155,7 @@ public class SiMMLTrack {
                 channel.offsetVolume(_expression, _velocity);
                 _channelModuleSetting.selectTone(this, _voiceIndex);
                 //_simulator.selectTone(this, _voiceIndex);
-                channel.offsetFilter(128);
+                channel.setFilterOffset(128);
             }
             // previous note off
             if (channel.isNoteOn()) {

@@ -179,7 +179,8 @@ public class Arpeggiator extends PatternSequencer {
         _currentPattern = indexPattern;
         if (_currentPattern != null) {
             imax = _currentPattern.length;
-//            _sequencer.pattern.size() = imax;
+            while (_sequencer.pattern.size() < imax) _sequencer.pattern.add(new Note());
+            while (_sequencer.pattern.size() > imax) _sequencer.pattern.remove(_sequencer.pattern.size() - 1);
             _sequencer.segmentFrameCount = imax;
             pattern = _sequencer.pattern;
             for (i = 0; i < imax; i++) {

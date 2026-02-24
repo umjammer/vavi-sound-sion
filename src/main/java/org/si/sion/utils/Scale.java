@@ -171,20 +171,25 @@ public class Scale {
             return;
         }
 
-        Pattern rex = Pattern.compile("(o[0 - 9]) ? ([A - Ga - g])([+#\\-b])?([a - z0 - 9] +)?");
+        Pattern rex = Pattern.compile("(o[0-9])?([A-Ga-g])([+#\\-b])?([a-z0-9]+)?");
         Matcher mat = rex.matcher(str);
         int i;
         if (mat.matches()) {
             _scaleName = str;
             int note = new int[] {9, 11, 0, 2, 4, 5, 7}[String.valueOf(mat.group(2)).toLowerCase().charAt(0) - 'a'];
-            if (mat.find(3)) {
+            if (mat.group(3) != null) {
                 if (mat.group(3).equals("+") || mat.group(3).equals("#")) note++;
                 else if (mat.group(3).equals("-")) note--;
             }
             if (note < 0) note += 12;
             else if (note > 11) note -= 12;
-            if (mat.group(1) != null) note += (int) (mat.group(1).charAt(1)) * 12;
-            else note += _defaultCenterOctave * 12;
+            if (mat.group(1) != null) {
+                int oct = Character.digit(mat.group(1).charAt(1), 10);
+                if (oct < 0) throw _errorInvalidScaleName(str);
+                note += oct * 12;
+            } else {
+                note += _defaultCenterOctave * 12;
+            }
 
             if (mat.group(4) != null) {
                 if (!(_scaleTableDictionary.containsKey(mat.group(4))))throw _errorInvalidScaleName(str);
@@ -348,14 +353,14 @@ public class Scale {
         _scaleName = src._scaleName;
         _scaleTable = src._scaleTable;
         int i, imax = src._scaleNotes.size();
-//        _scaleNotes.length = imax;
+        _scaleNotes.clear();
         for (i = 0; i < imax; i++) {
-            _scaleNotes.set(i, src._scaleNotes.get(i));
+            _scaleNotes.add(src._scaleNotes.get(i));
         }
         imax = src._tensionNotes.size();
-//        _tensionNotes.length = imax;
+        _tensionNotes.clear();
         for (i = 0; i < imax; i++) {
-            _tensionNotes.set(i, src._tensionNotes.get(i));
+            _tensionNotes.add(src._tensionNotes.get(i));
         }
         return this;
     }

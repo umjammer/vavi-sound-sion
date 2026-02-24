@@ -224,6 +224,11 @@ public class SoundObject extends org.si.utils.EventDispatcher {
         return _trackID;
     }
 
+    /** get track */
+    public SiMMLTrack getTrack() {
+        return _track;
+    }
+
     /** Track event trigger ID */
     public int getEventTriggerID() {
         return _eventTriggerID;

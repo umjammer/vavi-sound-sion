@@ -463,8 +463,14 @@ public class SiOPMChannelBase {
         _filterOn = (cutoff < 128 || resonance > 0 || ar > 0 || rr > 0);
     }
 
-    /** LP Filter cutoff offset controled by table envelop (nf) */
-    public void offsetFilter(int i) {
+    /** set SVFilter resonance (0-9). */
+    public void setFilterResonance(int i) {
+        int res = (i < 0) ? 0 : Math.min(i, 9);
+        _resonance = (1 << (9 - res)) * 0.001953125;   // 0.001953125=1/512
+    }
+
+    /** set SVFilter cutoff frequency (0-128). */
+    public void setFilterOffset(int i) {
         _cutoff_offset = i - 128;
     }
 

@@ -139,14 +139,19 @@ public class Chord extends Scale {
         if (mat.matches()) {
             _scaleName = str;
             int note = List.of(9, 11, 0, 2, 4, 5, 7).get(String.valueOf(mat.group(2)).toLowerCase().charAt(0) - 'a');
-            if (mat.find(3)) {
+            if (mat.group(3) != null) {
                 if (mat.group(3).equals("+") || mat.group(3).equals("#")) note++;
                 else if (mat.group(3).equals("-")) note--;
             }
             if (note < 0) note += 12;
             else if (note > 11) note -= 12;
-            if (mat.group(1) != null) note += (int) (mat.group(1).charAt(1)) * 12;
-            else note += 60;
+            if (mat.group(1) != null) {
+                int oct = Character.digit(mat.group(1).charAt(1), 10);
+                if (oct < 0) throw _errorInvalidChordName(str);
+                note += oct * 12;
+            } else {
+                note += 60;
+            }
 
             if (mat.group(4) != null) {
                 if (!(_chordTableDictionary.containsKey(mat.group(4))))throw _errorInvalidChordName(str);

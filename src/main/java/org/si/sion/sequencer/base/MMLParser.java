@@ -553,7 +553,7 @@ public class MMLParser {
                             _repeatBegin(__param(res, 2));
                             break;
                         case "]":
-                            _repeatEnd(__param(res, 0));
+                            _repeatEnd(__param(res, Integer.MIN_VALUE));
                             break;
                         case "|":
                             _repeatBreak();

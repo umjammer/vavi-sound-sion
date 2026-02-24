@@ -14,11 +14,10 @@ import vavi.net.URLRequest;
 
 
 /** Loader basic class. */
-public class AbstractLoader {
+public class AbstractLoader extends EventDispatcher {
 
     // variables
     //
-    protected EventSupport eventSupport = new EventSupport();
 
     /** loader */
     protected URLLoader _loader;
@@ -62,7 +61,7 @@ public class AbstractLoader {
     /** add child loader */
     public void addChild(AbstractLoader child) {
         _childLoaders.add(child);
-        child.eventSupport.addEventListener(Event.COMPLETE, this::_onChildComplete);
+        child.addEventListener(Event.COMPLETE, this::_onChildComplete);
     }
 
     // virtual function
@@ -79,7 +78,7 @@ public class AbstractLoader {
             _bytesTotal = pe.bytesTotal;
             _bytesLoaded = pe.bytesLoaded;
             _isLoadCompleted = false;
-            eventSupport.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS, false, false, _bytesLoaded, _bytesTotal));
+            dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS, false, false, _bytesLoaded, _bytesTotal));
         }
     }
 
@@ -89,14 +88,14 @@ public class AbstractLoader {
         _isLoadCompleted = true;
         onComplete();
         if (_childLoaders.isEmpty()) {
-            eventSupport.dispatchEvent(new Event(Event.COMPLETE));
+            dispatchEvent(new Event(Event.COMPLETE));
         }
     }
 
     private void _onError(Event e) {
         if (e instanceof ErrorEvent) {
             _removeAllListeners();
-            eventSupport.dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, e.toString()));
+            dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, e.toString()));
         }
     }
 
@@ -105,7 +104,7 @@ public class AbstractLoader {
         if (index == -1) throw new Error("AbstractLoader; unknown error, children mismatched.");
         _childLoaders.subList(index, index + 1).clear();
         if (_childLoaders.isEmpty() && _isLoadCompleted) {
-            eventSupport.dispatchEvent(new Event(Event.COMPLETE));
+            dispatchEvent(new Event(Event.COMPLETE));
         }
     }
 

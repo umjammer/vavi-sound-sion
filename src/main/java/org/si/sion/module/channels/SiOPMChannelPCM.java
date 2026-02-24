@@ -107,7 +107,8 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
     @Override
     public void setFrequencyRatio(int ratio) {
         _freq_ratio = ratio;
-        double r = (ratio != 0) ? (100 / ratio) : 1;
+        // Keep ratio conversion in floating-point; integer division collapses EG/LFO timing to zero.
+        double r = (ratio != 0) ? (100.0 / ratio) : 1;
         _eg_timer_initial = (int) (SiOPMTable.ENV_TIMER_INITIAL * r);
         _lfo_timer_initial = (int) (SiOPMTable.LFO_TIMER_INITIAL * r);
     }
@@ -243,16 +244,16 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
      */
     public void setSiOPMParameters(int ar, int dr, int sr, int rr, int sl, int tl, int ksr, int ksl, int mul, int dt1, int detune, int ams, int phase, int fixNote) {
         SiOPMOperator ope = operator;
-        if (ar != Integer.MIN_VALUE) ope._ar = ar;
-        if (dr != Integer.MIN_VALUE) ope._dr = dr;
-        if (sr != Integer.MIN_VALUE) ope._sr = sr;
-        if (rr != Integer.MIN_VALUE) ope._rr = rr;
-        if (sl != Integer.MIN_VALUE) ope._sl = sl;
-        if (tl != Integer.MIN_VALUE) ope._tl = tl;
-        if (ksr != Integer.MIN_VALUE) ope._ks = ksr;
-        if (ksl != Integer.MIN_VALUE) ope._ksl = ksl;
+        if (ar != Integer.MIN_VALUE) ope.setAr(ar);
+        if (dr != Integer.MIN_VALUE) ope.setDr(dr);
+        if (sr != Integer.MIN_VALUE) ope.setSr(sr);
+        if (rr != Integer.MIN_VALUE) ope.setRr(rr);
+        if (sl != Integer.MIN_VALUE) ope.setSl(sl);
+        if (tl != Integer.MIN_VALUE) ope.setTl(tl);
+        if (ksr != Integer.MIN_VALUE) ope.setKs(ksr);
+        if (ksl != Integer.MIN_VALUE) ope.setKsl(ksl);
         if (mul != Integer.MIN_VALUE) ope.setMul(mul);
-        if (dt1 != Integer.MIN_VALUE) ope._dt1 = dt1;
+        if (dt1 != Integer.MIN_VALUE) ope.setDt1(dt1);
         if (detune != Integer.MIN_VALUE) ope.setDetune(detune);
         if (ams != Integer.MIN_VALUE) ope.setAms(ams);
         if (phase != Integer.MIN_VALUE) ope.setKeyOnPhase(phase);
@@ -335,13 +336,13 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
     /** Attack rate */
     @Override
     public void setAllAttackRate(int ar) {
-        operator._ar = ar;
+        operator.setAr(ar);
     }
 
     /** Release rate (s) */
     @Override
     public void setAllReleaseRate(int rr) {
-        operator._rr = rr;
+        operator.setRr(rr);
     }
 
     // interfaces
@@ -376,13 +377,13 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
     /** release rate (&#64;rr) */
     @Override
     public void setRr(int i) {
-        operator._rr = i;
+        operator.setRr(i);
     }
 
     /** total level (&#64;tl) */
     @Override
     public void setTl(int i) {
-        operator._tl = i;
+        operator.setTl(i);
     }
 
     /** fine multiple (&#64;ml) */
