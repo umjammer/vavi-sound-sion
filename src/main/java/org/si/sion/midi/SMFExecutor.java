@@ -14,6 +14,7 @@ public class SMFExecutor {
 
     // variables
     //
+    static final int END_OF_TRACK = 65536;
 
     private int _pointer = 0;
     private int _residueTicks = 0;
@@ -42,7 +43,7 @@ public class SMFExecutor {
 
     /** */
     int _execute(int ticks) {
-        if (_residueTicks == -1) return 65536;
+        if (_residueTicks == -1) return END_OF_TRACK;
 
         SMFEvent event = _track.sequence.get(_pointer);
         int channel, v;
@@ -62,7 +63,7 @@ public class SMFExecutor {
                         break;
                     case SMFEvent.META_TRACK_END:
                         _residueTicks = -1;
-                        return 65536;
+                        return END_OF_TRACK;
                 }
             } else {
                 // MIDI event
@@ -97,7 +98,7 @@ public class SMFExecutor {
             // increment pointer
             if (++_pointer == _track.sequence.size()) {
                 _residueTicks = -1;
-                return 65536;
+                return END_OF_TRACK;
             }
             event = _track.sequence.get(_pointer);
             _residueTicks = event.deltaTime;

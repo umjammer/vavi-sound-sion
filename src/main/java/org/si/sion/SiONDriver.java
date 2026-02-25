@@ -434,7 +434,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         sequencer.setting.defaultBPM = t;
         if (sequencer.isReadyToProcess()) {
             if (!sequencer.isEnableChangeBPM()) throw errorCannotChangeBPM();
-            sequencer._bpm._bpm = t;
+            sequencer._bpm.update(t, (int) _sampleRate);
         }
     }
 

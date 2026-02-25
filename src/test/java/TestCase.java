@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.SourceDataLine;
@@ -56,6 +58,8 @@ Debug.print("volume: " + volume);
     @Test
     void test1() throws Exception {
         SiONDriver driver = new SiONDriver(2048, 2, 44100, 0);
+        AtomicBoolean smfFinished = new AtomicBoolean(false);
+        boolean isSmf;
 
         if (smf != null) {
             byte[] bytes = Files.readAllBytes(Paths.get(smf));
@@ -63,9 +67,13 @@ Debug.print("volume: " + volume);
             byteArray.writeBytes(bytes);
             SMFData smfData = new SMFData();
             smfData.loadBytes(byteArray);
+            driver.getMidiModule().onFinishSequence = () -> smfFinished.set(true);
             driver.play(smfData, true);
+            isSmf = true;
         } else {
+            driver.getMidiModule().onFinishSequence = null;
             driver.play("t120 l8 o5 ccggaag4 ffeeddc4 [ggffeed4]2 ccggaag4 ffeeddc4", true);
+            isSmf = false;
         }
 
         AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
@@ -75,11 +83,11 @@ Debug.print("volume: " + volume);
         line.start();
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
+        Future<?> playback = executor.submit(() -> {
+            int bufferSize = driver.getBufferLength();
+            byte[] out = new byte[bufferSize * 4];
             try {
-                int bufferSize = driver.getBufferLength();
-                byte[] out = new byte[bufferSize * 4];
-                while (!driver.sequencer.getIsSequenceFinished()) {
+                do {
                     driver.module._beginProcess();
                     driver.effector._beginProcess();
                     driver.sequencer._process();
@@ -94,7 +102,7 @@ Debug.print("volume: " + volume);
                         out[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
                     }
                     line.write(out, 0, out.length);
-                }
+                } while (isSmf ? !smfFinished.get() : !driver.sequencer.getIsSequenceFinished());
             } catch (Exception e) {
                 Debug.printStackTrace(e);
             } finally {
@@ -104,9 +112,7 @@ Debug.print("volume: " + volume);
         });
 
         Debug.println("Playing... Press Ctrl+C to stop.");
-        while (!driver.sequencer.getIsSequenceFinished()) {
-            Thread.sleep(100);
-        }
+        playback.get();
 
         Thread.sleep(500);
         executor.shutdown();
