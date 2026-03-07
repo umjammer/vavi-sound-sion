@@ -10,7 +10,7 @@ import org.si.sion.sequencer.SiMMLTable;
 import org.si.sion.utils.PeakDetector;
 import org.si.sion.utils.SiONUtil;
 import org.si.utils.SLLNumber;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 /** SiOPM samplers wave data */
@@ -74,7 +74,7 @@ public class SiOPMWaveSamplerData extends SiOPMWaveBase {
     /** Sammple length */
     public int getLength() {
         if (_isExtracted) return (_waveData.length >> (_channelCount - 1));
-        // if (_soundData != null && _soundData instanceof vavi.media.Sound) return (int)(SiONUtil.getSampleLength((vavi.media.Sound)_soundData));
+        // if (_soundData != null && _soundData instanceof media.as3.Sound) return (int)(SiONUtil.getSampleLength((media.as3.Sound)_soundData));
         return 0;
     }
 

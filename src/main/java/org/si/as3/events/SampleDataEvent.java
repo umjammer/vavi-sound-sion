@@ -1,4 +1,4 @@
-package vavi.events;
+package org.si.as3.events;
 
 import org.si.utils.ByteArray;
 import org.si.utils.Event;

@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import org.si.utils.ByteArray;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 /**

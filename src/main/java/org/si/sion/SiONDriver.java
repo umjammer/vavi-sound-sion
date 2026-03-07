@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import vavi.events.SampleDataEvent;
+import org.si.as3.events.SampleDataEvent;
 
 import org.si.sion.effector.SiEffectModule;
 import org.si.sion.events.SiONEvent;
@@ -43,10 +43,10 @@ import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
 import org.si.utils.SLLint;
-import vavi.media.Sound;
-import vavi.media.SoundChannel;
-import vavi.media.SoundTransform;
-import vavi.net.URLRequest;
+import org.si.as3.media.Sound;
+import org.si.as3.media.SoundChannel;
+import org.si.as3.media.SoundTransform;
+import org.si.as3.net.URLRequest;
 
 
 // Dispatching events

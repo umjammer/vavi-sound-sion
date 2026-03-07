@@ -1,4 +1,4 @@
-package vavi.display;
+package org.si.as3.display;
 
 
 public class BitmapData {

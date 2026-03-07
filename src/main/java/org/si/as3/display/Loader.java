@@ -1,4 +1,4 @@
-package vavi.display;
+package org.si.as3.display;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -15,9 +15,9 @@ import org.si.utils.ByteArray;
 import org.si.utils.Event;
 import org.si.utils.IOErrorEvent;
 import org.si.utils.ProgressEvent;
-import vavi.media.Sound;
-import vavi.net.URLRequest;
-import vavi.system.LoaderContext;
+import org.si.as3.media.Sound;
+import org.si.as3.net.URLRequest;
+import org.si.as3.system.LoaderContext;
 
 
 public class Loader {

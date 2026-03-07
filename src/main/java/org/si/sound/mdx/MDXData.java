@@ -16,7 +16,7 @@ import org.si.sion.sequencer.base.MMLSequence;
 import org.si.utils.AbstractLoader;
 import org.si.utils.ByteArray;
 import org.si.utils.Event;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLRequest;
 
 import static org.si.utils.ByteArray.BIG_ENDIAN;
 

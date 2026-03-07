@@ -13,7 +13,7 @@ import org.si.sion.module.SiOPMTable;
 import org.si.sion.module.SiOPMWaveTable;
 import org.si.utils.ByteArray;
 import org.si.utils.SLLNumber;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 /** Utilities for SiON */

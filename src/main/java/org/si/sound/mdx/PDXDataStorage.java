@@ -9,7 +9,7 @@ package org.si.sound.mdx;
 import java.util.HashMap;
 import java.util.Map;
 
-import vavi.net.URLRequest;
+import org.si.as3.net.URLRequest;
 
 
 /** PDX data storage */

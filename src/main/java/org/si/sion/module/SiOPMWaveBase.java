@@ -7,7 +7,7 @@
 package org.si.sion.module;
 
 import org.si.utils.Event;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 /** basic class for SiOPM wave data */
 public class SiOPMWaveBase {

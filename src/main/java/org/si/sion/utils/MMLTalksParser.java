@@ -14,8 +14,8 @@ import org.si.sion.utils.soundloader.SoundLoaderFileData;
 import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.ProgressEvent;
-import vavi.media.Sound;
-import vavi.net.URLRequest;
+import org.si.as3.media.Sound;
+import org.si.as3.net.URLRequest;
 
 
 /**

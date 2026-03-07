@@ -6,7 +6,7 @@
 
 package org.si.sion.utils;
 
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 /** BPMAnalyzer analyzes beat per minute value of music */

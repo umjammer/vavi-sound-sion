@@ -17,9 +17,9 @@ import java.util.Vector;
 import org.si.utils.ByteArray;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
-import vavi.net.URLLoader;
-import vavi.net.URLLoaderDataFormat;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLLoader;
+import org.si.as3.net.URLLoaderDataFormat;
+import org.si.as3.net.URLRequest;
 
 
 /** Standard MIDI File class */
@@ -177,7 +177,7 @@ public class SMFData extends EventDispatcher {
 
     private void _onComplete(Object e) {
         _removeAllListeners();
-        byte[] data = ((vavi.net.URLLoader) ((Event) e).target).data;
+        byte[] data = ((URLLoader) ((Event) e).target).data;
         if (data != null) {
             org.si.utils.ByteArray byteArray = new org.si.utils.ByteArray();
             byteArray.writeBytes(data);

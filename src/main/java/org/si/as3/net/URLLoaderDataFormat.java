@@ -1,4 +1,4 @@
-package vavi.net;
+package org.si.as3.net;
 public class URLLoaderDataFormat {
     public static final String BINARY = "binary";
     public static final String TEXT = "text";

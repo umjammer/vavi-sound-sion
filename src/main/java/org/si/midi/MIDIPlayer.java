@@ -14,7 +14,7 @@ import org.si.sion.SiONDriver;
 import org.si.sion.events.SiONEvent;
 import org.si.sion.midi.SMFData;
 import org.si.utils.Event;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLRequest;
 
 
 /** MIDI player */
