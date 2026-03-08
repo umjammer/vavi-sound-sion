@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sound.midi.Instrument;
@@ -96,6 +98,8 @@ public class SionSynthesizer implements Synthesizer {
 
     private MIDIModule midiModule;
 
+    private final Queue<Runnable> midiEvents = new ConcurrentLinkedQueue<>();
+
     // ----
 
     @Override
@@ -171,6 +175,19 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
         while (isOpen) {
             loopCount++;
             try {
+                // reset buffer index so that channel.getBufferIndex() returns 0 for midiEvents
+                for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
+                    var trk = driver.sequencer.tracks.get(t);
+                    if (trk.channel != null) {
+                        trk.channel.resetChannelBufferStatus();
+                    }
+                }
+
+                Runnable r;
+                while ((r = midiEvents.poll()) != null) {
+                    r.run();
+                }
+
                 // run the SiOPM processing pipeline for one buffer chunk
                 driver.module._beginProcess();
                 driver.effector._beginProcess();
@@ -189,12 +206,12 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                     out[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
                 }
                 if (maxAbs > 0.001) {
-                    logger.log(Level.INFO, "audio output: maxAbs=%.6f, tracks=%d".formatted(maxAbs, driver.sequencer.tracks.size()));
+                    logger.log(Level.TRACE, "audio output: maxAbs=%.6f, tracks=%d".formatted(maxAbs, driver.sequencer.tracks.size()));
                 }
                 if (loopCount % 50 == 1) { // periodic debug
                     for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
                         var trk = driver.sequencer.tracks.get(t);
-                        logger.log(Level.INFO, "loop[%d] track[%d]: active=%b, ptr=%s, ch_noteOn=%b, ch_idling=%b".formatted(
+                        logger.log(Level.TRACE, "loop[%d] track[%d]: active=%b, ptr=%s, ch_noteOn=%b, ch_idling=%b".formatted(
                             loopCount, t, trk.isActive(), trk.executor.pointer,
                             trk.channel.isNoteOn(), trk.channel.isIdling()));
                     }
@@ -207,7 +224,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
 
             } catch (Exception e) {
                 if (!isOpen) break; // normal shutdown
-                logger.log(Level.INFO, "Audio processing error: " + e.getMessage(), e);
+                logger.log(Level.TRACE, "Audio processing error: " + e.getMessage(), e);
             }
         }
     }
@@ -353,65 +370,61 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
         public void send(MidiMessage message, long timeStamp) {
             if (!isOpen) throw new IllegalStateException("Receiver is not open");
 
-            switch (message) {
-                case ShortMessage shortMessage -> {
-                    int channel = shortMessage.getChannel();
-                    int command = shortMessage.getCommand();
-                    int data1 = shortMessage.getData1();
-                    int data2 = shortMessage.getData2();
+            midiEvents.add(() -> {
+                switch (message) {
+                    case ShortMessage shortMessage -> {
+                        int channel = shortMessage.getChannel();
+                        int command = shortMessage.getCommand();
+                        int data1 = shortMessage.getData1();
+                        int data2 = shortMessage.getData2();
 
-                    switch (command) {
-                        case ShortMessage.NOTE_ON -> {
-                            if (data2 == 0) {
-                                // velocity 0 = note off per MIDI spec
-                                midiModule.noteOff(channel, data1, 0);
-                            } else {
-logger.log(Level.INFO, "[%d] NOTE_ON ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
-                                midiModule.noteOn(channel, data1, data2);
-                                // check all tracks for noteOn state
-                                for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
-                                    var trk = driver.sequencer.tracks.get(t);
-                                    if (trk.channel.isNoteOn() || trk.executor.pointer != null) {
-                                        logger.log(Level.INFO, "  -> track[%d]: ptr=%s, noteOn=%b, idling=%b, note=%d".formatted(
-                                            t, trk.executor.pointer, trk.channel.isNoteOn(), trk.channel.isIdling(), trk.getNote()));
-                                    }
+                        switch (command) {
+                            case ShortMessage.NOTE_ON -> {
+                                if (data2 == 0) {
+                                    // velocity 0 = note off per MIDI spec
+                                    midiModule.noteOff(channel, data1, 0);
+                                } else {
+logger.log(Level.TRACE, "[%d] NOTE_ON ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
+                                    midiModule.noteOn(channel, data1, data2);
+                                }
+                            }
+                            case ShortMessage.NOTE_OFF -> {
+logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
+                                midiModule.noteOff(channel, data1, data2);
+                            }
+                            case ShortMessage.PROGRAM_CHANGE ->
+                                midiModule.programChange(channel, data1);
+                            case ShortMessage.CONTROL_CHANGE ->
+                                midiModule.controlChange(channel, data1, data2);
+                            case ShortMessage.PITCH_BEND -> {
+                                // combine data1 (LSB) and data2 (MSB) into 14-bit value, centered at 8192
+                                int bend = (data2 << 7) | data1;
+                                midiModule.pitchBend(channel, bend - 8192);
+                            }
+                            case ShortMessage.CHANNEL_PRESSURE ->
+                                midiModule.channelAfterTouch(channel, data1);
+                            default ->
+logger.log(Level.DEBUG, "unhandled command: %02X ch: %d, d1: %d, d2: %d".formatted(command, channel, data1, data2));
+                        }
+                    }
+                    case SysexMessage sysexMessage -> {
+                        byte[] data = sysexMessage.getData();
+logger.log(Level.DEBUG, "sysex: %02X\n%s".formatted(sysexMessage.getStatus(), StringUtil.getDump(data, 32)));
+                        switch (data[0]) {
+                            case 0x7f -> { // Universal Realtime
+                                int c = data[1]; // 0x7f: Disregards channel
+                                // Sub-ID, Sub-ID2
+                                if (data[2] == 0x04 && data[3] == 0x01) { // Device Control / Master Volume
+                                    float gain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383f;
+logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
+                                    volume(line, gain);
                                 }
                             }
                         }
-                        case ShortMessage.NOTE_OFF ->
-                            midiModule.noteOff(channel, data1, data2);
-                        case ShortMessage.PROGRAM_CHANGE ->
-                            midiModule.programChange(channel, data1);
-                        case ShortMessage.CONTROL_CHANGE ->
-                            midiModule.controlChange(channel, data1, data2);
-                        case ShortMessage.PITCH_BEND -> {
-                            // combine data1 (LSB) and data2 (MSB) into 14-bit value, centered at 8192
-                            int bend = (data2 << 7) | data1;
-                            midiModule.pitchBend(channel, bend - 8192);
-                        }
-                        case ShortMessage.CHANNEL_PRESSURE ->
-                            midiModule.channelAfterTouch(channel, data1);
-                        default ->
-logger.log(Level.DEBUG, "unhandled command: %02X ch: %d, d1: %d, d2: %d".formatted(command, channel, data1, data2));
                     }
+                    default -> {}
                 }
-                case SysexMessage sysexMessage -> {
-                    byte[] data = sysexMessage.getData();
-logger.log(Level.DEBUG, "sysex: %02X\n%s".formatted(sysexMessage.getStatus(), StringUtil.getDump(data, 32)));
-                    switch (data[0]) {
-                        case 0x7f -> { // Universal Realtime
-                            int c = data[1]; // 0x7f: Disregards channel
-                            // Sub-ID, Sub-ID2
-                            if (data[2] == 0x04 && data[3] == 0x01) { // Device Control / Master Volume
-                                float gain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383f;
-logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
-                                volume(line, gain);
-                            }
-                        }
-                    }
-                }
-                default -> {}
-            }
+            });
         }
 
         @Override
