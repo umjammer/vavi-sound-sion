@@ -44,7 +44,7 @@ class TestCase {
     double volume = 0.2;
 
     @Property
-    String smf;
+    String midi;
 
     @BeforeEach
     void setup() throws Exception {
@@ -61,8 +61,8 @@ Debug.print("volume: " + volume);
         AtomicBoolean smfFinished = new AtomicBoolean(false);
         boolean isSmf;
 
-        if (smf != null) {
-            byte[] bytes = Files.readAllBytes(Paths.get(smf));
+        if (midi != null) {
+            byte[] bytes = Files.readAllBytes(Paths.get(midi));
             ByteArray byteArray = new ByteArray();
             byteArray.writeBytes(bytes);
             SMFData smfData = new SMFData();
