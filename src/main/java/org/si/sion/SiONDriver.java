@@ -399,6 +399,17 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         return _midiModule;
     }
 
+    /**
+     * Initialize MIDI module for real-time MIDI input.
+     * Must be called after play() has been called to set up the processing pipeline.
+     *
+     * @param useMIDIModuleEffector set true to use MIDIModule's default effectors (reverb, chorus, delay)
+     * @return true if initialization succeeded
+     */
+    public boolean initializeMidiModule(boolean useMIDIModuleEffector) {
+        return _midiModule._initialize(useMIDIModuleEffector);
+    }
+
     // operation
 
     /** Get playing position[ms] of current data, or Set initial position of playing data. @default 0 */

@@ -192,8 +192,8 @@ public class MIDIModule {
     // operations
     //
 
-    /** @private this function instanceof called first of all sequences */
-    boolean _initialize(boolean useMIDIModuleEffector) {
+    /** this function is called first of all sequences */
+    public boolean _initialize(boolean useMIDIModuleEffector) {
         int i;
         MIDIModuleOperator ope;
         _sionDriver = SiONDriver.mutex();
