@@ -526,7 +526,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         if (_mutex != null && !_allowPluralDrivers) throw errorPluralDrivers();
 
         // check parameters
-        if (bufferLength != 2048 && bufferLength != 4096 && bufferLength != 8192)
+        if (bufferLength < 128)
             throw errorParamNotAvailable("stream buffer", bufferLength);
         if (channelCount != 1 && channelCount != 2) throw errorParamNotAvailable("channel count", channelCount);
         if (sampleRate != 44100) throw errorParamNotAvailable("sampling rate", sampleRate);

@@ -62,7 +62,16 @@ class SionSynthesizerTest {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
-Debug.println("volume: " + volume);
+
+        try {
+            java.lang.reflect.Field f = org.si.sion.SiONDriver.class.getDeclaredField("_mutex");
+            f.setAccessible(true);
+            f.set(null, null);
+        } catch (Exception e) {
+            Debug.printStackTrace(e);
+        }
+
+        Debug.println("volume: " + volume);
     }
 
     @Test

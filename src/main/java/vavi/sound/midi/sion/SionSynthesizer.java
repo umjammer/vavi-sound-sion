@@ -86,7 +86,7 @@ public class SionSynthesizer implements Synthesizer {
                             "SiON Software synthesizer for MA3",
                             "Version " + version) {};
 
-    private long timestamp;
+    private long frames;
 
     private volatile boolean isOpen;
 
@@ -114,7 +114,7 @@ logger.log(Level.WARNING, "already open: " + hashCode());
             return;
         }
 
-        driver = new SiONDriver(2048, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
+        driver = new SiONDriver(256, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
 
         // initialize the processing pipeline (module, sequencer, effector)
         driver.play(null, true);
@@ -132,7 +132,7 @@ logger.log(Level.WARNING, "already open: " + hashCode());
     /** audio thread */
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(Thread.MIN_PRIORITY);
+        thread.setPriority(Thread.MAX_PRIORITY);
         return thread;
     });
 
@@ -144,8 +144,8 @@ logger.log(Level.WARNING, "already open: " + hashCode());
 logger.log(Level.DEBUG, line.getClass().getName());
             line.addLineListener(event -> logger.log(Level.DEBUG, "Line: " + event.getType()));
 
-            // use driver's buffer length * 4 bytes per frame (16-bit stereo) as line buffer
-            line.open(audioFormat, driver.getBufferLength() * 4);
+            // use a large enough line buffer to prevent underruns (e.g. 8192 frames)
+            line.open(audioFormat, 8192 * 4);
             line.start();
         } catch (LineUnavailableException e) {
             throw (MidiUnavailableException) new MidiUnavailableException().initCause(e);
@@ -163,8 +163,7 @@ logger.log(Level.DEBUG, line.getClass().getName());
      * and eliminating the need for manual timing.
      */
     private void audioLoop() {
-        start = System.currentTimeMillis();
-        timestamp = start;
+        frames = 0;
 
         int bufferLength = driver.getBufferLength();
         // output is interleaved L/R doubles, length = bufferLength * 2
@@ -220,7 +219,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                 // blocking write — natural backpressure from the audio device
                 line.write(out, 0, out.length);
 
-                timestamp = System.currentTimeMillis();
+                frames += bufferLength;
 
             } catch (Exception e) {
                 if (!isOpen) break; // normal shutdown
@@ -246,7 +245,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
 
     @Override
     public long getMicrosecondPosition() {
-        return (timestamp - start) * 1000;
+        return (long) ((frames / (double) audioFormat.getSampleRate()) * 1_000_000);
     }
 
     @Override
