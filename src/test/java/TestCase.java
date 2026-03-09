@@ -52,6 +52,14 @@ class TestCase {
             PropsEntity.Util.bind(this);
         }
 
+        try {
+            java.lang.reflect.Field f = org.si.sion.SiONDriver.class.getDeclaredField("_mutex");
+            f.setAccessible(true);
+            f.set(null, null);
+        } catch (Exception e) {
+            Debug.printStackTrace(e);
+        }
+
 Debug.print("volume: " + volume);
     }
 
