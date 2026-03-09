@@ -8,7 +8,7 @@ package org.si.sion.module;
 
 import org.si.sion.sequencer.SiMMLTable;
 import org.si.sion.utils.SiONUtil;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 /** PCM data class */
 public class SiOPMWavePCMData extends SiOPMWaveBase {

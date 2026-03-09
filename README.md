@@ -1,7 +1,7 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sound-sion.svg)](https://jitpack.io/#umjammer/vavi-sound-sion)
 [![Java CI](https://github.com/umjammer/vavi-sound-sion/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-sound-sion/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/vavi-sound-sion/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-sound-sion/actions/workflows/codeql.yml)
-![Java](https://img.shields.io/badge/Java-17-b07219)
+![Java](https://img.shields.io/badge/Java-21-b07219)
 
 # vavi-sound-sion
 
@@ -23,7 +23,9 @@
 
 ## TODO
 
- * spi
+ * ~~spi (midi)~~
+ * make filters spi
+ * ~~drum timbre compare `vavi.sound.midi.MidiConstant#getDrumInstrumentName` and~~
 
 ---
 

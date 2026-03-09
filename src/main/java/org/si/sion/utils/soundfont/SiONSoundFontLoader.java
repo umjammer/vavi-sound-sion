@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.si.as3.media.Sound;
 import org.si.sion.SiONVoice;
 import org.si.sion.module.SiOPMTable;
 import org.si.sion.module.SiOPMWavePCMTable;
@@ -23,9 +24,9 @@ import org.si.utils.ByteArray;
 import org.si.utils.ByteArrayExt;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
-import vavi.net.URLLoader;
-import vavi.net.URLLoaderDataFormat;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLLoader;
+import org.si.as3.net.URLLoaderDataFormat;
+import org.si.as3.net.URLRequest;
 
 
 /** Sound font loader. */
@@ -45,12 +46,12 @@ public class SiONSoundFontLoader extends EventDispatcher {
 
     /** loaded size. */
     public double getBytesLoaded() {
-        return 0; // Not implemented / Not supported by vavi.net.URLLoader
+        return 0; // Not implemented / Not supported by net.as3.URLLoader
     }
 
     /** total size. */
     public double getBytesTotal() {
-        return 0; // Not implemented / Not supported by vavi.net.URLLoader
+        return 0; // Not implemented / Not supported by net.as3.URLLoader
     }
 
     // constructor
@@ -133,14 +134,14 @@ public class SiONSoundFontLoader extends EventDispatcher {
     private void _analyzeZip(ByteArray bytes) {
         List<ByteArrayExt> fileList = new ByteArrayExt(bytes).expandZipFile();
         int i, imax = fileList.size();
-        Map<String, vavi.media.Sound> sounds = new HashMap<>();
+        Map<String, Sound> sounds = new HashMap<>();
         String mml = null;
-        vavi.media.Sound snd;
+        Sound snd;
         ByteArrayExt file;
         for (i = 0; i < imax; i++) {
             file = fileList.get(i);
             if (file.name.matches(".*\\.mp3$")) {
-                snd = new vavi.media.Sound();
+                snd = new Sound();
                 sounds.put(file.name, snd);
                 // snd.loadCompressedDataFromByteArray(file, file.length); // Not implemented yet
             } else if (file.name.matches(".*\\.mml$")) {

@@ -349,9 +349,12 @@ public class SiOPMChannelFM extends SiOPMChannelBase {
      */
     @Override
     public void setWaveData(SiOPMWaveBase waveData) {
-        SiOPMWavePCMData pcmData = ((SiOPMWavePCMData) waveData);
-        if (waveData instanceof SiOPMWavePCMTable)
+        SiOPMWavePCMData pcmData = null;
+        if (waveData instanceof SiOPMWavePCMData) {
+            pcmData = (SiOPMWavePCMData) waveData;
+        } else if (waveData instanceof SiOPMWavePCMTable) {
             pcmData = ((SiOPMWavePCMTable) waveData)._table[60];
+        }
 
         if (pcmData != null && pcmData.wavelet != null) {
             _updateOperatorCount(1);

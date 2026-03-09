@@ -9,8 +9,8 @@ package org.si.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import vavi.net.URLLoader;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLLoader;
+import org.si.as3.net.URLRequest;
 
 
 /** Loader basic class. */

@@ -1,4 +1,4 @@
-package vavi.media;
+package org.si.as3.media;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,7 +17,7 @@ import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
 import org.si.utils.IOErrorEvent;
 import org.si.utils.ProgressEvent;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLRequest;
 
 
 public class Sound extends EventDispatcher {

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import vavi.display.BitmapData;
+import org.si.as3.display.BitmapData;
 
 
 /** Extended ByteArray, png image serialize, IFF chunk structure, FileReference operations. */

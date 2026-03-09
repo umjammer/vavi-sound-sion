@@ -9,6 +9,7 @@ package org.si.sion.utils.soundloader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.si.as3.display.LoaderInfo;
 import org.si.sion.midi.SMFData;
 import org.si.sion.utils.PCMSample;
 import org.si.sion.utils.SoundClass;
@@ -21,15 +22,15 @@ import org.si.utils.EventDispatcher;
 import org.si.utils.IOErrorEvent;
 import org.si.utils.ProgressEvent;
 import org.si.utils.SecurityErrorEvent;
-import vavi.display.Bitmap;
-import vavi.display.BitmapData;
-import vavi.display.Loader;
-import vavi.media.Sound;
-import vavi.media.SoundLoaderContext;
-import vavi.net.URLLoader;
-import vavi.net.URLLoaderDataFormat;
-import vavi.net.URLRequest;
-import vavi.system.LoaderContext;
+import org.si.as3.display.Bitmap;
+import org.si.as3.display.BitmapData;
+import org.si.as3.display.Loader;
+import org.si.as3.media.Sound;
+import org.si.as3.media.SoundLoaderContext;
+import org.si.as3.net.URLLoader;
+import org.si.as3.net.URLLoaderDataFormat;
+import org.si.as3.net.URLRequest;
+import org.si.as3.system.LoaderContext;
 
 // Dispatching events
 /** @eventType flash.events.Event.COMPLETE */
@@ -333,7 +334,7 @@ public class SoundLoaderFileData extends EventDispatcher {
         if (target instanceof URLLoader loader) {
             return loader.bytesLoaded;
         }
-        if (target instanceof vavi.display.LoaderInfo info) {
+        if (target instanceof LoaderInfo info) {
             return info.bytesLoaded;
         }
         return _bytesLoaded;
@@ -346,7 +347,7 @@ public class SoundLoaderFileData extends EventDispatcher {
         if (target instanceof URLLoader loader) {
             return loader.bytesTotal;
         }
-        if (target instanceof vavi.display.LoaderInfo info) {
+        if (target instanceof LoaderInfo info) {
             return info.bytesTotal;
         }
         return _bytesTotal;

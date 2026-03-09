@@ -24,6 +24,8 @@ public class SiONDataConverterSMF extends SiONData {
     private final MMLEvent _waitEvent;
     private SMFExecutor[] _executors = null;
     private double _resolutionRatio = 1;
+    private double _mmlTickError = 0;
+    private double _midiTickError = 0;
 
     // properties
     //
@@ -94,22 +96,43 @@ public class SiONDataConverterSMF extends SiONData {
 
         // initialize interval
         _waitEvent.length = 0;
+        _mmlTickError = 0;
+        _midiTickError = 0;
 
         return null;
     }
 
     private MMLEvent _onMIDIEventCallback(Object data) {
         int i, imax = _executors.length;
-        SMFExecutor exec;
-        int seq, ticks, deltaTime, minDeltaTime;
-        ticks = (int) (_waitEvent.length / _resolutionRatio);
-        minDeltaTime = _executors[0]._execute(ticks);
-        for (i = 1; i < imax; i++) {
+        int ticks, deltaTime, minDeltaTime;
+        boolean allFinished = true;
+
+        double midiTicks = (_waitEvent.length / _resolutionRatio) + _midiTickError;
+        ticks = (int) midiTicks;
+        _midiTickError = midiTicks - ticks;
+
+        minDeltaTime = Integer.MAX_VALUE;
+        for (i = 0; i < imax; i++) {
             deltaTime = _executors[i]._execute(ticks);
-            if (minDeltaTime > deltaTime) minDeltaTime = deltaTime;
+            if (deltaTime != SMFExecutor.END_OF_TRACK) {
+                allFinished = false;
+                if (minDeltaTime > deltaTime) minDeltaTime = deltaTime;
+            }
         }
-        if (minDeltaTime == 65536) _module._onFinishSequence();
-        _waitEvent.length = (int) (minDeltaTime * _resolutionRatio);
+
+        if (allFinished) {
+            _module._onFinishSequence();
+            _waitEvent.length = 0;
+            return null;
+        }
+
+        double mmlTicks = (minDeltaTime * _resolutionRatio) + _mmlTickError;
+        _waitEvent.length = (int) mmlTicks;
+        _mmlTickError = mmlTicks - _waitEvent.length;
+        if (_waitEvent.length == 0 && minDeltaTime > 0) {
+            _waitEvent.length = 1;
+            _mmlTickError = 0;
+        }
         return null;
     }
 }

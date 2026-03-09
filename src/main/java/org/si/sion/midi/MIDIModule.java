@@ -77,6 +77,7 @@ public class MIDIModule {
     // others 
     private int _dispatchFlags = 0;
     private SiONPresetVoice _internalPreset = null;
+    private double _drumVelocityBoost = 1.0;
 
     // properties
     //
@@ -134,6 +135,15 @@ public class MIDIModule {
         _systemExclusiveMode = mode;
     }
 
+    /** drum velocity boost for drum mode channels */
+    public double getDrumVelocityBoost() {
+        return _drumVelocityBoost;
+    }
+
+    public void setDrumVelocityBoost(double boost) {
+        _drumVelocityBoost = (boost < 0) ? 0 : boost;
+    }
+
     // constructor
     //
 
@@ -169,7 +179,7 @@ public class MIDIModule {
         enableDrumNoteOff(new int[] {71, 72}, true);          // samba whistle
 
         // alloc channels
-        midiChannels = new MIDIModuleChannel[midiChannelCount];
+        setMidiChannelCount(midiChannelCount);
 
         // load preset voices
         _internalPreset = SiONPresetVoice.getMutex();
@@ -182,8 +192,8 @@ public class MIDIModule {
     // operations
     //
 
-    /** @private this function instanceof called first of all sequences */
-    boolean _initialize(boolean useMIDIModuleEffector) {
+    /** this function is called first of all sequences */
+    public boolean _initialize(boolean useMIDIModuleEffector) {
         int i;
         MIDIModuleOperator ope;
         _sionDriver = SiONDriver.mutex();
@@ -267,12 +277,13 @@ public class MIDIModule {
 
     /** reset voice set to default */
     public void resetVoiceSet() {
-        int i;
-        for (i = 0; i < 128; i++) {
-            voiceSet[i] = ((SiONPresetVoice.SiONVoiceList)_internalPreset.get("svmidi")).get(i);
+        for (int i = 0; i < 128; i++) {
+            voiceSet[i] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi")).get(i);
         }
-        for (i = 0; i < 60; i++) {
-            drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList)_internalPreset.get("svmidi.drum")).get(i);
+        for (int i = 0; i < 60; i++) {
+            if (!Boolean.parseBoolean(System.getProperty("org.si.sion.midi.gm", "false"))) {
+                drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi.drum")).get(i);
+            }
         }
     }
 
@@ -291,14 +302,23 @@ public class MIDIModule {
 
             // get operator
             if (midiChannel.activeOperatorCount >= midiChannel.maxOperatorCount) {
+                ope = null;
                 for (ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
                     if (ope.channel == channelNum) {
                         _activeOperators.remove(ope);
                         break;
                     }
                 }
+                if (ope == null || ope == _activeOperators) {
+                    ope = _activeOperators.shift();
+                }
             } else {
-                ope = _freeOperators.shift() != null ? _freeOperators.shift() : _activeOperators.shift();
+                ope = _freeOperators.shift();
+                if (ope == null) ope = _activeOperators.shift();
+            }
+
+            if (ope == null) {
+                return;
             }
 
             if (ope.isNoteOn) {
@@ -350,8 +370,19 @@ public class MIDIModule {
             track.setPitchBend((midiChannel.pitchBend * midiChannel.pitchBendSensitivity) >> 7); // (* 64 / 8192)
             track.setPortament(midiChannel.portamentoTime);
             track.setEventTrigger(midiChannel.eventTriggerID, midiChannel.eventTriggerTypeOn, midiChannel.eventTriggerTypeOff);
-            track.setVelocity((int) ((velocity * 1.5) + 64));
+            int trackVelocity = (int) ((velocity * 1.5) + 64);
+            double drumGain = 1;
+            if (midiChannel.drumMode != 0) {
+                trackVelocity = (int) (trackVelocity * _drumVelocityBoost);
+                drumGain = _drumVelocityBoost;
+            }
+            track.setVelocity((trackVelocity < 0) ? 0 : Math.min(trackVelocity, 512));
             channel.setAllStreamSendLevels(midiChannel._sionVolumes);
+            if (drumGain != 1) {
+                for (int streamNum = 0; streamNum < midiChannel._sionVolumes.length; streamNum++) {
+                    channel.setStreamSend(streamNum, channel.getStreamSend(streamNum) * drumGain);
+                }
+            }
             channel.setPan(midiChannel.pan);
             channel.setLFOCycleTime(midiChannel.modulationCycleTime);
             channel.setPitchModulation(midiChannel.modulation >> 2);            // width = 32

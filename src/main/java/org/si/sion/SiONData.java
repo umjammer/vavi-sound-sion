@@ -13,7 +13,7 @@ import org.si.sion.module.SiOPMWavePCMTable;
 import org.si.sion.module.SiOPMWaveSamplerData;
 import org.si.sion.module.SiOPMWaveSamplerTable;
 import org.si.sion.sequencer.SiMMLData;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 public class SiONData extends SiMMLData implements ISiOPMWaveInterface {

@@ -24,7 +24,7 @@ import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
 import org.si.utils.ProgressEvent;
 import org.si.utils.ErrorEvent;
-import vavi.net.URLRequest;
+import org.si.as3.net.URLRequest;
 
 
 /** Sound Loader.</br>

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import vavi.events.SampleDataEvent;
+import org.si.as3.events.SampleDataEvent;
 
 import org.si.sion.effector.SiEffectModule;
 import org.si.sion.events.SiONEvent;
@@ -43,10 +43,10 @@ import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
 import org.si.utils.SLLint;
-import vavi.media.Sound;
-import vavi.media.SoundChannel;
-import vavi.media.SoundTransform;
-import vavi.net.URLRequest;
+import org.si.as3.media.Sound;
+import org.si.as3.media.SoundChannel;
+import org.si.as3.media.SoundTransform;
+import org.si.as3.net.URLRequest;
 
 
 // Dispatching events
@@ -399,6 +399,17 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         return _midiModule;
     }
 
+    /**
+     * Initialize MIDI module for real-time MIDI input.
+     * Must be called after play() has been called to set up the processing pipeline.
+     *
+     * @param useMIDIModuleEffector set true to use MIDIModule's default effectors (reverb, chorus, delay)
+     * @return true if initialization succeeded
+     */
+    public boolean initializeMidiModule(boolean useMIDIModuleEffector) {
+        return _midiModule._initialize(useMIDIModuleEffector);
+    }
+
     // operation
 
     /** Get playing position[ms] of current data, or Set initial position of playing data. @default 0 */
@@ -434,7 +445,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         sequencer.setting.defaultBPM = t;
         if (sequencer.isReadyToProcess()) {
             if (!sequencer.isEnableChangeBPM()) throw errorCannotChangeBPM();
-            sequencer._bpm._bpm = t;
+            sequencer._bpm.update(t, (int) _sampleRate);
         }
     }
 
@@ -515,7 +526,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         if (_mutex != null && !_allowPluralDrivers) throw errorPluralDrivers();
 
         // check parameters
-        if (bufferLength != 2048 && bufferLength != 4096 && bufferLength != 8192)
+        if (bufferLength < 128)
             throw errorParamNotAvailable("stream buffer", bufferLength);
         if (channelCount != 1 && channelCount != 2) throw errorParamNotAvailable("channel count", channelCount);
         if (sampleRate != 44100) throw errorParamNotAvailable("sampling rate", sampleRate);

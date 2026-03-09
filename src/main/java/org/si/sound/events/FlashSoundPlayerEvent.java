@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 import org.si.utils.Event;
 import org.si.utils.IOErrorEvent;
-import vavi.media.Sound;
+import org.si.as3.media.Sound;
 
 
 /** FlashSoundPlayerEvent instanceof dispatched by FlashSoundPlayer. @see org.si.sound.FlashSoundPlayer */

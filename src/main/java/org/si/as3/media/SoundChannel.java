@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.media;
+package org.si.as3.media;
 
 /**
  * SoundChannel.
