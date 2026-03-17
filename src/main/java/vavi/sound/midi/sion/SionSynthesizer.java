@@ -11,6 +11,7 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Queue;
@@ -92,13 +93,19 @@ public class SionSynthesizer implements Synthesizer {
 
     private final AudioFormat audioFormat = new AudioFormat(44100, 16, 2, true, false);
 
+    /** nanoseconds per sample at 44100 Hz ≈ 22675.7 ns */
+    private final double nanosPerSample = 1_000_000_000.0 / audioFormat.getSampleRate();
+
     private SourceDataLine line;
 
     private SiONDriver driver;
 
     private MIDIModule midiModule;
 
-    private final Queue<Runnable> midiEvents = new ConcurrentLinkedQueue<>();
+    /** A MIDI event tagged with the wall-clock nanos at which it was received. */
+    private record TimestampedEvent(long nanos, Runnable action) {}
+
+    private final Queue<TimestampedEvent> midiEvents = new ConcurrentLinkedQueue<>();
 
     // ----
 
@@ -114,7 +121,7 @@ logger.log(Level.WARNING, "already open: " + hashCode());
             return;
         }
 
-        driver = new SiONDriver(256, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
+        driver = new SiONDriver(128, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
 
         // initialize the processing pipeline (module, sequencer, effector)
         driver.play(null, true);
@@ -155,12 +162,12 @@ logger.log(Level.DEBUG, line.getClass().getName());
     private long start;
 
     /**
-     * Audio generation loop.
+     * Audio generation loop with nanosecond-precision MIDI event scheduling.
      * <p>
-     * Processes exactly one bufferLength chunk per iteration through the SiOPM
-     * pipeline, then writes the result to the SourceDataLine. The line.write()
-     * call blocks when the line buffer is full, providing natural backpressure
-     * and eliminating the need for manual timing.
+     * Each iteration processes one bufferLength chunk (128 samples ≈ 2.9 ms).
+     * MIDI events are sorted by their nanosecond timestamp and fired in order
+     * before the pipeline processes. Events arriving after the current buffer's
+     * time window are deferred to the next iteration.
      */
     private void audioLoop() {
         frames = 0;
@@ -169,11 +176,15 @@ logger.log(Level.DEBUG, line.getClass().getName());
         // output is interleaved L/R doubles, length = bufferLength * 2
         byte[] out = new byte[bufferLength * 4]; // 16-bit stereo = 4 bytes per sample frame
         int loopCount = 0;
+        double bufferDurationNanos = bufferLength * nanosPerSample;
 logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", out.length=" + out.length);
 
         while (isOpen) {
             loopCount++;
             try {
+                long bufferStartNanos = System.nanoTime();
+                long bufferEndNanos = bufferStartNanos + (long) bufferDurationNanos;
+
                 // reset buffer index so that channel.getBufferIndex() returns 0 for midiEvents
                 for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
                     var trk = driver.sequencer.tracks.get(t);
@@ -182,9 +193,21 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                     }
                 }
 
-                Runnable r;
-                while ((r = midiEvents.poll()) != null) {
-                    r.run();
+                // drain events that fall within this buffer's time window,
+                // sorted by nanosecond timestamp for correct ordering
+                List<TimestampedEvent> currentEvents = new ArrayList<>();
+                while (!midiEvents.isEmpty()) {
+                    TimestampedEvent evt = midiEvents.peek();
+                    if (evt.nanos() <= bufferEndNanos) {
+                        currentEvents.add(midiEvents.poll());
+                    } else {
+                        break; // remaining events belong to a future buffer
+                    }
+                }
+                // sort by timestamp for correct intra-buffer ordering
+                currentEvents.sort(Comparator.comparingLong(TimestampedEvent::nanos));
+                for (TimestampedEvent evt : currentEvents) {
+                    evt.action().run();
                 }
 
                 // run the SiOPM processing pipeline for one buffer chunk
@@ -207,7 +230,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                 if (maxAbs > 0.001) {
                     logger.log(Level.TRACE, "audio output: maxAbs=%.6f, tracks=%d".formatted(maxAbs, driver.sequencer.tracks.size()));
                 }
-                if (loopCount % 50 == 1) { // periodic debug
+                if (loopCount % 350 == 1) { // periodic debug (adjusted for smaller buffer)
                     for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
                         var trk = driver.sequencer.tracks.get(t);
                         logger.log(Level.TRACE, "loop[%d] track[%d]: active=%b, ptr=%s, ch_noteOn=%b, ch_idling=%b".formatted(
@@ -369,7 +392,10 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
         public void send(MidiMessage message, long timeStamp) {
             if (!isOpen) throw new IllegalStateException("Receiver is not open");
 
-            midiEvents.add(() -> {
+            // capture wall-clock nanos for sub-buffer precision scheduling
+            long nanos = System.nanoTime();
+
+            midiEvents.add(new TimestampedEvent(nanos, () -> {
                 switch (message) {
                     case ShortMessage shortMessage -> {
                         int channel = shortMessage.getChannel();
@@ -423,7 +449,7 @@ logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
                     }
                     default -> {}
                 }
-            });
+            }));
         }
 
         @Override

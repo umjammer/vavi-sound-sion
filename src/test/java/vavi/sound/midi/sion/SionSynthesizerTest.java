@@ -71,7 +71,7 @@ class SionSynthesizerTest {
             Debug.printStackTrace(e);
         }
 
-        Debug.println("volume: " + volume);
+Debug.println("volume: " + volume);
     }
 
     @Test
@@ -123,7 +123,7 @@ Debug.println(midi);
         Synthesizer synthesizer = MidiSystem.getSynthesizer();
         assertEquals(SionSynthesizer.class, synthesizer.getClass());
         synthesizer.open();
-        Debug.println("synthesizer: " + synthesizer);
+Debug.println("synthesizer: " + synthesizer);
 
         Sequencer sequencer = MidiSystem.getSequencer(false);
         Receiver receiver = synthesizer.getReceiver();
