@@ -52,14 +52,7 @@ class TestCase {
             PropsEntity.Util.bind(this);
         }
 
-        try {
-            java.lang.reflect.Field f = org.si.sion.SiONDriver.class.getDeclaredField("_mutex");
-            f.setAccessible(true);
-            f.set(null, null);
-        } catch (Exception e) {
-            Debug.printStackTrace(e);
-        }
-
+        System.setProperty("org.si.sion.allowPluralDrivers", "true");
 Debug.print("volume: " + volume);
     }
 

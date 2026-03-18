@@ -220,7 +220,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
 
     // mutex instance
     private static SiONDriver _mutex = null;            // unique instance
-    private static boolean _allowPluralDrivers = false; // allow plural drivers
+    private static boolean _allowPluralDrivers = Boolean.getBoolean("org.si.sion.allowPluralDrivers"); // allow plural drivers
 
     // properties
     //
