@@ -22,6 +22,7 @@ class MIDIModuleOperator {
     int channel;
     int note;
     boolean isNoteOn;
+    boolean isSustained;
     int drumExcID;
 
     // constructor

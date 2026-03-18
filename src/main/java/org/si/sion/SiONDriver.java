@@ -546,7 +546,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         _fader = new Fader();
         _timerSequence = new MMLSequence(false);
         _loadingSoundList = new Object[0];
-        _midiModule = new MIDIModule(16, 16, "gm");
+        _midiModule = new MIDIModule(64, 16, "gm");
         _midiConverter = new SiONDataConverterSMF(null, _midiModule);
 
         // initialize
