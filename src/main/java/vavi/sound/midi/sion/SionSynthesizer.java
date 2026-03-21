@@ -10,7 +10,6 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,6 +37,8 @@ import javax.sound.sampled.SourceDataLine;
 
 import org.si.sion.SiONDriver;
 import org.si.sion.midi.MIDIModule;
+import org.si.sion.sequencer.base.MMLEvent;
+import org.si.sion.sequencer.base.MMLSequence;
 import org.si.utils.ByteArray;
 import vavi.sound.midi.sion.SionSoundbank.SionInstrument;
 import vavi.util.StringUtil;
@@ -75,19 +76,37 @@ public class SionSynthesizer implements Synthesizer {
 
     private final AudioFormat audioFormat = new AudioFormat(44100, 16, 2, true, false);
 
-    /** nanoseconds per sample at 44100 Hz ≈ 22675.7 ns */
-    private final double nanosPerSample = 1_000_000_000.0 / audioFormat.getSampleRate();
-
     private SourceDataLine line;
 
     private SiONDriver driver;
 
     private MIDIModule midiModule;
 
-    /** A MIDI event tagged with the wall-clock nanos at which it was received. */
-    private record TimestampedEvent(long nanos, Runnable action) {}
+    /**
+     * Set the BPM for the internal SiON sequencer.
+     * <p>
+     * In the API path, BPM is set from the MIDI file's tempo meta events.
+     * In the SPI path, the Java Sequencer handles tempo internally but
+     * the SiON driver needs to know the BPM for correct sub-buffer
+     * event interleaving via the global sequence callback.
+     * <p>
+     * Call this from a MetaEventListener when receiving tempo meta events
+     * (type 0x51), converting microseconds-per-quarter-note to BPM.
+     *
+     * @param bpm beats per minute
+     */
+    public void setBpm(double bpm) {
+        if (driver != null) {
+            driver.setBpm(bpm);
+logger.log(Level.DEBUG, "BPM set to " + bpm);
+        }
+    }
 
-    private final Queue<TimestampedEvent> midiEvents = new ConcurrentLinkedQueue<>();
+    /** Queued MIDI event actions to be processed on the audio thread. */
+    private final Queue<Runnable> midiEvents = new ConcurrentLinkedQueue<>();
+
+    /** GLOBAL_WAIT event whose length is set by the callback */
+    private MMLEvent spiWaitEvent;
 
     // ----
 
@@ -111,6 +130,10 @@ logger.log(Level.WARNING, "already open: " + hashCode());
         // initialize MIDI module — allocates polyphony operator pool with tracks
         driver.initializeMidiModule(true);
         midiModule = driver.getMidiModule();
+
+        // install global sequence — events must fire inside _process() because
+        // keyOn() sets executor.pointer which is consumed by processMMLExecutor()
+        setupGlobalSequence();
 
         isOpen = true;
 
@@ -141,15 +164,42 @@ logger.log(Level.DEBUG, line.getClass().getName());
         }
     }
 
-    private long start;
+    /**
+     * Set up a global sequence so that MIDI events fire inside _process().
+     * This is required because keyOn() sets executor.pointer to a DRIVER_NOTE
+     * event that must be consumed by processMMLExecutor() within the same
+     * _process() call.
+     */
+    private void setupGlobalSequence() {
+        MMLSequence seq = new MMLSequence(false);
+        seq.initialize();
+        seq.appendNewEvent(MMLEvent.REPEAT_ALL, 0, 0);
+        seq.appendNewCallback(this::onSpiCallback, 0);
+        spiWaitEvent = seq.appendNewEvent(MMLEvent.GLOBAL_WAIT, 0, 0);
+        driver.sequencer.setGlobalSequence(seq);
+    }
 
     /**
-     * Audio generation loop with nanosecond-precision MIDI event scheduling.
+     * Global sequence callback: processes ALL pending MIDI events immediately,
+     * then waits for the remainder of the buffer.
+     */
+    private MMLEvent onSpiCallback(Object data) {
+        // process all pending events immediately
+        Runnable evt;
+        while ((evt = midiEvents.poll()) != null) {
+            evt.run();
+        }
+
+        // wait for the remainder of the buffer (1 tick minimum)
+        spiWaitEvent.length = 1;
+        return null;
+    }
+
+    /**
+     * Audio generation loop.
      * <p>
-     * Each iteration processes one bufferLength chunk (128 samples ≈ 2.9 ms).
-     * MIDI events are sorted by their nanosecond timestamp and fired in order
-     * before the pipeline processes. Events arriving after the current buffer's
-     * time window are deferred to the next iteration.
+     * Each iteration processes one bufferLength chunk (256 samples ≈ 5.8 ms).
+     * MIDI events fire inside _process() via the global sequence callback.
      */
     private void audioLoop() {
         frames = 0;
@@ -158,16 +208,12 @@ logger.log(Level.DEBUG, line.getClass().getName());
         // output is interleaved L/R doubles, length = bufferLength * 2
         byte[] out = new byte[bufferLength * 4]; // 16-bit stereo = 4 bytes per sample frame
         int loopCount = 0;
-        double bufferDurationNanos = bufferLength * nanosPerSample;
 logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", out.length=" + out.length);
 
         while (isOpen) {
             loopCount++;
             try {
-                long bufferStartNanos = System.nanoTime();
-                long bufferEndNanos = bufferStartNanos + (long) bufferDurationNanos;
-
-                // reset buffer index so that channel.getBufferIndex() returns 0 for midiEvents
+                // reset buffer index so that channel.getBufferIndex() returns 0
                 for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
                     var trk = driver.sequencer.tracks.get(t);
                     if (trk.channel != null) {
@@ -175,24 +221,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                     }
                 }
 
-                // drain events that fall within this buffer's time window,
-                // sorted by nanosecond timestamp for correct ordering
-                List<TimestampedEvent> currentEvents = new ArrayList<>();
-                while (!midiEvents.isEmpty()) {
-                    TimestampedEvent evt = midiEvents.peek();
-                    if (evt.nanos() <= bufferEndNanos) {
-                        currentEvents.add(midiEvents.poll());
-                    } else {
-                        break; // remaining events belong to a future buffer
-                    }
-                }
-                // sort by timestamp for correct intra-buffer ordering
-                currentEvents.sort(Comparator.comparingLong(TimestampedEvent::nanos));
-                for (TimestampedEvent evt : currentEvents) {
-                    evt.action().run();
-                }
-
-                // run the SiOPM processing pipeline for one buffer chunk
+                // run the SiOPM processing pipeline
                 driver.module._beginProcess();
                 driver.effector._beginProcess();
                 driver.sequencer._process();
@@ -213,12 +242,26 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                     logger.log(Level.TRACE, "audio output: maxAbs=%.6f, tracks=%d".formatted(maxAbs, driver.sequencer.tracks.size()));
                 }
                 if (loopCount % 350 == 1) { // periodic debug (adjusted for smaller buffer)
+                    int noteOnCount = 0;
                     for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
                         var trk = driver.sequencer.tracks.get(t);
-                        logger.log(Level.TRACE, "loop[%d] track[%d]: active=%b, ptr=%s, ch_noteOn=%b, ch_idling=%b".formatted(
-                            loopCount, t, trk.isActive(), trk.executor.pointer,
-                            trk.channel.isNoteOn(), trk.channel.isIdling()));
+                        if (trk.channel.isNoteOn()) noteOnCount++;
                     }
+                    // per-channel volume and activity snapshot with effect send levels
+                    StringBuilder chInfo = new StringBuilder();
+                    for (int ch = 0; ch < 16; ch++) {
+                        var mc = midiModule.midiChannels[ch];
+                        if (mc.activeOperatorCount > 0 || mc.getMasterVolume() != 100) {
+                            chInfo.append("ch%d[v=%d,e=%d,prg=%d,act=%d,drm=%d,fx=%d/%d/%d] ".formatted(
+                                ch, mc.getMasterVolume(), mc.getExpression(),
+                                mc.programNumber, mc.activeOperatorCount, mc.drumMode,
+                                mc.getEffectSendLevel(1), mc.getEffectSendLevel(2), mc.getEffectSendLevel(3)));
+                        }
+                    }
+                    double sec = (double) frames / audioFormat.getSampleRate();
+                    logger.log(Level.DEBUG, "loop[%d] t=%.1fs free=%d, active=%d, noteOn=%d, maxAbs=%.3f\n  %s".formatted(
+                        loopCount, sec, midiModule.getFreeOperatorCount(), midiModule.getActiveOperatorCount(),
+                        noteOnCount, maxAbs, chInfo));
                 }
 
                 // blocking write — natural backpressure from the audio device
@@ -374,10 +417,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
         public void send(MidiMessage message, long timeStamp) {
             if (!isOpen) throw new IllegalStateException("Receiver is not open");
 
-            // capture wall-clock nanos for sub-buffer precision scheduling
-            long nanos = System.nanoTime();
-
-            midiEvents.add(new TimestampedEvent(nanos, () -> {
+            midiEvents.add(() -> {
                 switch (message) {
                     case ShortMessage shortMessage -> {
                         int channel = shortMessage.getChannel();
@@ -391,7 +431,11 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                                     // velocity 0 = note off per MIDI spec
                                     midiModule.noteOff(channel, data1, 0);
                                 } else {
-logger.log(Level.TRACE, "[%d] NOTE_ON ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
+{
+                                    var mc = midiModule.midiChannels[channel];
+                                    logger.log(Level.DEBUG, "[%d] NOTE_ON ch:%d note:%d vel:%d vol:%d exp:%d prg:%d drm:%d".formatted(
+                                        timeStamp, channel, data1, data2, mc.getMasterVolume(), mc.getExpression(), mc.programNumber, mc.drumMode));
+                                    }
                                     midiModule.noteOn(channel, data1, data2);
                                 }
                             }
@@ -399,12 +443,12 @@ logger.log(Level.TRACE, "[%d] NOTE_ON ch: %d, note: %d, vel: %d".formatted(timeS
 logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
                                 midiModule.noteOff(channel, data1, data2);
                             }
-                            case ShortMessage.PROGRAM_CHANGE ->
+                            case ShortMessage.PROGRAM_CHANGE -> {
+                                logger.log(Level.DEBUG, "[%d] PROG_CHG ch:%d prg:%d".formatted(timeStamp, channel, data1));
                                 midiModule.programChange(channel, data1);
+                            }
                             case ShortMessage.CONTROL_CHANGE -> {
-                                if (data1 == 64) { // CC#64 sustain pedal
-                                    logger.log(Level.TRACE, "[%d] SUSTAIN ch: %d %s".formatted(timeStamp, channel, data2 >= 64 ? "ON" : "OFF"));
-                                }
+                                logger.log(Level.DEBUG, "[%d] CC ch:%d cc#%d val:%d".formatted(timeStamp, channel, data1, data2));
                                 midiModule.controlChange(channel, data1, data2);
                             }
                             case ShortMessage.PITCH_BEND -> {
@@ -432,10 +476,17 @@ logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
                                 }
                             }
                         }
+                        // forward all SysEx to MIDIModule for GM/GS/XG Reset and drum mode handling
+                        ByteArray bytes = new ByteArray();
+                        bytes.writeByte(0xf0); // prepend status byte stripped by SysexMessage.getData()
+                        for (byte b : data) bytes.writeByte(b & 0xff);
+                        bytes.position = 0;
+logger.log(Level.DEBUG, "forwarding sysex to MIDIModule (%d bytes)".formatted(bytes.length));
+                        midiModule.systemExclusive(0, bytes);
                     }
                     default -> {}
                 }
-            }));
+            });
         }
 
         @Override

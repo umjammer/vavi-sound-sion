@@ -452,7 +452,13 @@ public class MIDIModule {
                 ope.isSustained = true;
                 ope.isNoteOn = false;
             } else {
-                if (midiChannel.drumMode == 0 || _drumNoteOffAvailable[note] != 0) ope.sionTrack.keyOff(0, false);
+                if (midiChannel.drumMode == 0 || _drumNoteOffAvailable[note] != 0) {
+                    ope.sionTrack.keyOff(0, false);
+                } else {
+                    // drum note-off without keyOff: still need to clear noteOn
+                    // so the track can idle after envelope decay
+                    ope.sionTrack.channel.noteOff();
+                }
                 ope.isNoteOn = false;
                 ope.isSustained = false;
                 ope.note = -1;

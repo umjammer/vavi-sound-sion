@@ -12,11 +12,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.lang.System.Logger.Level;
+
 import org.si.sion.module.SiOPMModule;
+
+import static java.lang.System.getLogger;
 
 
 /** Effect Module. */
 public class SiEffectModule {
+
+    private static final System.Logger logger = getLogger(SiEffectModule.class.getName());
 
     // constant
     //
@@ -225,6 +231,10 @@ public class SiEffectModule {
             _localEffects.get(slot).process(0, bufferLength, true);
         }
 
+        // measure dry level before effects
+        double dryMax = 0;
+        for (i = 0; i < imax; i++) if (Math.abs(output[i]) > dryMax) dryMax = Math.abs(output[i]);
+
         // global effect (slot1-slot7)
         for (slot = 1; slot < SiOPMModule.STREAM_SEND_SIZE; slot++) {
             effect = _globalEffects[slot];
@@ -232,12 +242,20 @@ public class SiEffectModule {
                 if (effect.getOutputDirectly()) {
                     effect.process(0, bufferLength, false);
                     buffer = effect._stream.buffer;
-                    for (i = 0; i < imax; i++) output[i] += buffer[i];
+                    double fxMax = 0;
+                    for (i = 0; i < imax; i++) { if (Math.abs(buffer[i]) > fxMax) fxMax = Math.abs(buffer[i]); output[i] += buffer[i]; }
+                    if (fxMax > 0.001) logger.log(Level.TRACE, "fx slot%d: direct, fxMax=%.4f".formatted(slot, fxMax));
                 } else {
                     effect.process(0, bufferLength, true);
+                    logger.log(Level.TRACE, "fx slot%d: stream".formatted(slot));
                 }
             }
         }
+
+        // measure final level after effects
+        double finalMax = 0;
+        for (i = 0; i < imax; i++) if (Math.abs(output[i]) > finalMax) finalMax = Math.abs(output[i]);
+        if (dryMax > 0.001 || finalMax > 0.001) logger.log(Level.TRACE, "fx: dryMax=%.4f finalMax=%.4f effectorCount=%d".formatted(dryMax, finalMax, _globalEffectCount));
 
         // master effect (slot0)
         _masterEffect.process(0, bufferLength, false);

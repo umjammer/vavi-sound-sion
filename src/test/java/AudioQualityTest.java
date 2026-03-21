@@ -164,6 +164,197 @@ class AudioQualityTest {
         System.out.printf("  dB level: %.1f dB%n", 20 * Math.log10(maxAbs(samples)));
     }
 
+    /**
+     * Per-second RMS comparison to identify when outputs diverge
+     */
+    @Test
+    @DisplayName("Per-second RMS comparison")
+    void perSecondComparison() throws Exception {
+        String refPath = "tmp/sion_api.wav";
+        String spiPath = "tmp/sion_spi.wav";
+        if (!Files.exists(Paths.get(refPath)) || !Files.exists(Paths.get(spiPath))) {
+            System.out.println("WAV files not found. Run WaveOutTest first.");
+            return;
+        }
+
+        float[] refSamples = readWavSamples(refPath);
+        float[] spiSamples = readWavSamples(spiPath);
+
+        // stereo: 2 samples per frame, 44100 frames per second
+        int framesPerSec = 44100;
+        int samplesPerSec = framesPerSec * 2;
+        int maxSeconds = Math.min(refSamples.length, spiSamples.length) / samplesPerSec;
+
+        System.out.println("\n=== PER-SECOND RMS COMPARISON (raw, not normalized) ===");
+        System.out.printf("%-4s  %-10s %-10s %-10s %-10s %-10s %-10s%n",
+            "Sec", "API_RMS", "SPI_RMS", "Ratio", "API_Peak", "SPI_Peak", "PeakRatio");
+
+        for (int sec = 0; sec < maxSeconds; sec++) {
+            int start = sec * samplesPerSec;
+            int end = Math.min(start + samplesPerSec, Math.min(refSamples.length, spiSamples.length));
+
+            double refRmsVal = 0, spiRmsVal = 0;
+            double refPeak = 0, spiPeak = 0;
+            for (int i = start; i < end; i++) {
+                refRmsVal += refSamples[i] * refSamples[i];
+                spiRmsVal += spiSamples[i] * spiSamples[i];
+                refPeak = Math.max(refPeak, Math.abs(refSamples[i]));
+                spiPeak = Math.max(spiPeak, Math.abs(spiSamples[i]));
+            }
+            int count = end - start;
+            refRmsVal = Math.sqrt(refRmsVal / count);
+            spiRmsVal = Math.sqrt(spiRmsVal / count);
+
+            double rmsRatio = refRmsVal > 0.0001 ? spiRmsVal / refRmsVal : 0;
+            double peakRatio = refPeak > 0.0001 ? spiPeak / refPeak : 0;
+            System.out.printf("%-4d  %-10.5f %-10.5f %-10.3f %-10.4f %-10.4f %-10.3f%n",
+                sec, refRmsVal, spiRmsVal, rmsRatio, refPeak, spiPeak, peakRatio);
+        }
+    }
+
+    /**
+     * Time-aligned difference using windowed cross-correlation.
+     * For each 1-second window, finds the best local alignment,
+     * then computes the aligned difference. Creates both a
+     * difference WAV file and per-second aligned metrics.
+     */
+    @Test
+    @DisplayName("Create time-aligned difference WAV")
+    void createAlignedDifferenceWav() throws Exception {
+        String refPath = "tmp/sion_api.wav";
+        String spiPath = "tmp/sion_spi.wav";
+        if (!Files.exists(Paths.get(refPath)) || !Files.exists(Paths.get(spiPath))) {
+            System.out.println("WAV files not found. Run WaveOutTest first.");
+            return;
+        }
+
+        float[] api = readWavSamples(refPath);
+        float[] spi = readWavSamples(spiPath);
+        int len = Math.min(api.length, spi.length);
+
+        // Step 1: find global offset using cross-correlation on first loud segment
+        // search for first segment with significant audio (after initial silence)
+        int searchStart = 44100 * 2 * 3; // start at 3 seconds (skip silence)
+        int corrLen = 44100 * 2; // 1 second of stereo data
+        int maxShift = 44100; // search ±0.5 seconds (in stereo samples = 1 sec of frames)
+
+        double bestCorr = -1;
+        int bestShift = 0;
+        for (int shift = -maxShift; shift <= maxShift; shift++) {
+            double corr = 0, normA = 0, normB = 0;
+            int count = 0;
+            for (int i = 0; i < corrLen; i++) {
+                int ai = searchStart + i;
+                int bi = searchStart + i + shift;
+                if (ai >= 0 && ai < api.length && bi >= 0 && bi < spi.length) {
+                    corr += api[ai] * spi[bi];
+                    normA += api[ai] * api[ai];
+                    normB += spi[bi] * spi[bi];
+                    count++;
+                }
+            }
+            if (normA > 0 && normB > 0) {
+                corr /= Math.sqrt(normA * normB);
+                if (corr > bestCorr) {
+                    bestCorr = corr;
+                    bestShift = shift;
+                }
+            }
+        }
+        System.out.printf("Best global alignment: shift SPI by %d samples (%.1f ms), correlation: %.4f%n",
+            bestShift, bestShift / 88.2, bestCorr);
+
+        // Step 2: create aligned difference
+        float[] diff = new float[len];
+        int validLen = 0;
+        for (int i = 0; i < len; i++) {
+            int si = i + bestShift;
+            if (si >= 0 && si < spi.length) {
+                diff[i] = api[i] - spi[si];
+                validLen = i + 1;
+            }
+        }
+
+        // compute aligned metrics
+        double diffRms = 0, sigRms = 0;
+        for (int i = 0; i < validLen; i++) {
+            diffRms += diff[i] * diff[i];
+            sigRms += api[i] * api[i];
+        }
+        diffRms = Math.sqrt(diffRms / validLen);
+        sigRms = Math.sqrt(sigRms / validLen);
+        System.out.printf("Aligned: Signal RMS: %.5f, Diff RMS: %.5f, Ratio: %.4f (%.1f dB)%n",
+            sigRms, diffRms, diffRms / sigRms, 20 * Math.log10(diffRms / sigRms));
+
+        // Step 3: write aligned difference WAV (amplified)
+        double diffPeak = maxAbs(diff);
+        float gain = (float) (0.9 / Math.max(diffPeak, 0.0001));
+        System.out.printf("Diff peak: %.5f, gain: %.1fx%n", diffPeak, gain);
+
+        byte[] pcm = new byte[validLen * 2];
+        for (int i = 0; i < validLen; i++) {
+            short s = (short) Math.max(-32767, Math.min(32767, diff[i] * gain * 32767));
+            pcm[i * 2] = (byte) (s & 0xff);
+            pcm[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
+        }
+        javax.sound.sampled.AudioFormat fmt = new javax.sound.sampled.AudioFormat(44100, 16, 2, true, false);
+        javax.sound.sampled.AudioInputStream ais = new javax.sound.sampled.AudioInputStream(
+            new java.io.ByteArrayInputStream(pcm), fmt, validLen / 2);
+        java.io.File outFile = new java.io.File("tmp/sion_diff_aligned.wav");
+        javax.sound.sampled.AudioSystem.write(ais, javax.sound.sampled.AudioFileFormat.Type.WAVE, outFile);
+        System.out.println("Aligned difference WAV: " + outFile.getAbsolutePath());
+
+        // Step 4: per-second breakdown with local re-alignment
+        int framesPerSec = 44100;
+        int samplesPerSec = framesPerSec * 2;
+        int maxSeconds = validLen / samplesPerSec;
+        int localMaxShift = 4410; // ±50ms local re-alignment (in stereo samples)
+
+        System.out.printf("%n%-4s  %-8s  %-10s %-10s %-10s %-8s%n",
+            "Sec", "Shift", "DiffRMS", "SigRMS", "Ratio(dB)", "Corr");
+        for (int sec = 0; sec < maxSeconds; sec++) {
+            int wStart = sec * samplesPerSec;
+            int wLen = Math.min(samplesPerSec, validLen - wStart);
+
+            // local cross-correlation to find best alignment for this second
+            double bCorr = -1;
+            int bShift = 0;
+            for (int sh = -localMaxShift; sh <= localMaxShift; sh++) {
+                double c = 0, nA = 0, nB = 0;
+                for (int i = 0; i < wLen; i++) {
+                    int ai = wStart + i;
+                    int bi = wStart + i + bestShift + sh;
+                    if (ai < api.length && bi >= 0 && bi < spi.length) {
+                        c += api[ai] * spi[bi];
+                        nA += api[ai] * api[ai];
+                        nB += spi[bi] * spi[bi];
+                    }
+                }
+                if (nA > 0 && nB > 0) {
+                    c /= Math.sqrt(nA * nB);
+                    if (c > bCorr) { bCorr = c; bShift = sh; }
+                }
+            }
+
+            // compute aligned difference for this second
+            double dr = 0, sr = 0;
+            for (int i = 0; i < wLen; i++) {
+                int ai = wStart + i;
+                int bi = wStart + i + bestShift + bShift;
+                if (ai < api.length && bi >= 0 && bi < spi.length) {
+                    double d = api[ai] - spi[bi];
+                    dr += d * d;
+                    sr += api[ai] * api[ai];
+                }
+            }
+            dr = Math.sqrt(dr / wLen);
+            sr = Math.sqrt(sr / wLen);
+            double ratio = sr > 0.0001 ? 20 * Math.log10(dr / sr) : -999;
+            System.out.printf("%-4d  %-8d  %-10.5f %-10.5f %-10.1f %-8.4f%n",
+                sec, bShift, dr, sr, ratio, bCorr);
+        }
+    }
+
     @Test
     @DisplayName("Compare SPI output quality with original API reference")
     void compareAudioQuality() throws Exception {
