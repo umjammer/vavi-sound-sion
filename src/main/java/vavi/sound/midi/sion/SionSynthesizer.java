@@ -55,7 +55,10 @@ import static vavi.sound.midi.sion.SionMidiDeviceProvider.version;
  * SiOPM processing pipeline for audio generation. The audio thread uses
  * SourceDataLine's blocking write for natural backpressure — no manual
  * sample-counting or busy-wait timing is needed.
- *
+ * </p><p>
+ * system property
+ *  <li>{@code org.si.sion.bufferSize} ... midi buffer size, default 256</li>
+ * </p>
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2026/03/06 umjammer initial version <br>
  */
@@ -144,7 +147,8 @@ logger.log(Level.WARNING, "already open: " + hashCode());
             return;
         }
 
-        driver = new SiONDriver(256, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
+        int bufSize = Integer.getInteger("org.si.sion.bufferSize", 256);
+        driver = new SiONDriver(bufSize, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
 
         // initialize the processing pipeline (module, sequencer, effector)
         driver.play(null, true);
@@ -175,7 +179,7 @@ logger.log(Level.WARNING, "already open: " + hashCode());
         try {
             DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class, audioFormat, AudioSystem.NOT_SPECIFIED);
             line = (SourceDataLine) AudioSystem.getLine(lineInfo);
-logger.log(Level.DEBUG, line.getClass().getName());
+logger.log(Level.TRACE, line.getClass().getName());
             line.addLineListener(event -> logger.log(Level.DEBUG, "Line: " + event.getType()));
 
             // use a large enough line buffer to prevent underruns (e.g. 8192 frames)
@@ -257,7 +261,7 @@ logger.log(Level.DEBUG, line.getClass().getName());
         // output is interleaved L/R doubles, length = bufferLength * 2
         byte[] out = new byte[bufferLength * 4]; // 16-bit stereo = 4 bytes per sample frame
         int loopCount = 0;
-logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", out.length=" + out.length);
+logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", out.length=" + out.length);
 
         while (isOpen) {
             loopCount++;
@@ -308,7 +312,7 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                         }
                     }
                     double sec = (double) frames / audioFormat.getSampleRate();
-                    logger.log(Level.DEBUG, "loop[%d] t=%.1fs free=%d, active=%d, noteOn=%d, maxAbs=%.3f\n  %s".formatted(
+                    logger.log(Level.TRACE, "loop[%d] t=%.1fs free=%d, active=%d, noteOn=%d, maxAbs=%.3f\n  %s".formatted(
                         loopCount, sec, midiModule.getFreeOperatorCount(), midiModule.getActiveOperatorCount(),
                         noteOnCount, maxAbs, chInfo));
                 }
@@ -499,9 +503,9 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
                                     // velocity 0 = note off per MIDI spec
                                     midiModule.noteOff(channel, data1, 0);
                                 } else {
-{
+                                    {
                                     var mc = midiModule.midiChannels[channel];
-                                    logger.log(Level.DEBUG, "[%d] NOTE_ON ch:%d note:%d vel:%d vol:%d exp:%d prg:%d drm:%d".formatted(
+                                    logger.log(Level.TRACE, "[%d] NOTE_ON ch:%d note:%d vel:%d vol:%d exp:%d prg:%d drm:%d".formatted(
                                         timeStamp, channel, data1, data2, mc.getMasterVolume(), mc.getExpression(), mc.programNumber, mc.drumMode));
                                     }
                                     midiModule.noteOn(channel, data1, data2);
@@ -512,11 +516,11 @@ logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(time
                                 midiModule.noteOff(channel, data1, data2);
                             }
                             case ShortMessage.PROGRAM_CHANGE -> {
-                                logger.log(Level.DEBUG, "[%d] PROG_CHG ch:%d prg:%d".formatted(timeStamp, channel, data1));
+                                logger.log(Level.TRACE, "[%d] PROG_CHG ch:%d prg:%d".formatted(timeStamp, channel, data1));
                                 midiModule.programChange(channel, data1);
                             }
                             case ShortMessage.CONTROL_CHANGE -> {
-                                logger.log(Level.DEBUG, "[%d] CC ch:%d cc#%d val:%d".formatted(timeStamp, channel, data1, data2));
+                                logger.log(Level.TRACE, "[%d] CC ch:%d cc#%d val:%d".formatted(timeStamp, channel, data1, data2));
                                 midiModule.controlChange(channel, data1, data2);
                             }
                             case ShortMessage.PITCH_BEND -> {
@@ -532,7 +536,7 @@ logger.log(Level.DEBUG, "unhandled command: %02X ch: %d, d1: %d, d2: %d".formatt
                     }
                     case SysexMessage sysexMessage -> {
                         byte[] data = sysexMessage.getData();
-logger.log(Level.DEBUG, "sysex: %02X\n%s".formatted(sysexMessage.getStatus(), StringUtil.getDump(data, 32)));
+logger.log(Level.TRACE, "sysex: %02X\n%s".formatted(sysexMessage.getStatus(), StringUtil.getDump(data, 32)));
                         switch (data[0]) {
                             case 0x7f -> { // Universal Realtime
                                 int c = data[1]; // 0x7f: Disregards channel

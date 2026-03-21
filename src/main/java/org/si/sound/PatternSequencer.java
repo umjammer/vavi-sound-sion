@@ -82,7 +82,7 @@ public class PatternSequencer extends SoundObject {
 
     @Override
     public void setNote(int n) {
-        throw _errorCannotChange("note");
+        throw new IllegalStateException("You can not change " + "note" + " property in this object.");
     }
 
     /** current length in the sequence, you cannot change this property. */
@@ -93,7 +93,7 @@ public class PatternSequencer extends SoundObject {
 
     @Override
     public void setLength(double l) {
-        throw _errorCannotChange("length");
+        throw new IllegalStateException("You can not change " + "length" + " property in this object.");
     }
 
     /** current length in the sequence, you cannot change this property. */

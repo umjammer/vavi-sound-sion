@@ -46,11 +46,10 @@ public class SMFExecutor {
         if (_residueTicks == -1) return END_OF_TRACK;
 
         SMFEvent event = _track.sequence.get(_pointer);
-        int channel, v;
 
         while (ticks >= _residueTicks) {
             ticks -= _residueTicks;
-            channel = event.type & 15;
+            int channel = event.type & 15;
 
             if ((event.type & 0xff00) != 0) {
                 // META event
@@ -78,7 +77,7 @@ public class SMFExecutor {
                         _module.noteOff(channel, event.getNote(), event.getVelocity());
                         break;
                     case SMFEvent.NOTE_ON:
-                        v = event.getVelocity();
+                        int v = event.getVelocity();
                         if (v > 0) _module.noteOn(channel, event.getNote(), v);
                         else _module.noteOff(channel, event.getNote(), v);
                         break;

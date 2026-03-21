@@ -147,14 +147,14 @@ public class Chord extends Scale {
             else if (note > 11) note -= 12;
             if (mat.group(1) != null) {
                 int oct = Character.digit(mat.group(1).charAt(1), 10);
-                if (oct < 0) throw _errorInvalidChordName(str);
+                if (oct < 0) throw new IllegalArgumentException("Chord; Invalid chord name. '" + str + "'");
                 note += oct * 12;
             } else {
                 note += 60;
             }
 
             if (mat.group(4) != null) {
-                if (!(_chordTableDictionary.containsKey(mat.group(4))))throw _errorInvalidChordName(str);
+                if (!(_chordTableDictionary.containsKey(mat.group(4)))) throw new IllegalArgumentException("Chord; Invalid chord name. '" + str + "'");
                 _scaleTable = _chordTableDictionary.get(mat.group(4));
                 _scaleName = mat.group(4);
             } else {
@@ -163,7 +163,7 @@ public class Chord extends Scale {
             }
             this.setRootNote(note);
         } else {
-            throw _errorInvalidChordName(str);
+            throw new IllegalArgumentException("Chord; Invalid chord name. '" + str + "'");
         }
     }
 
@@ -209,13 +209,5 @@ public class Chord extends Scale {
             _bassNoteOffset = ((Chord) src)._bassNoteOffset;
         }
         return this;
-    }
-
-    // errors
-    //
-
-    /** Invalid chord name error */
-    protected RuntimeException _errorInvalidChordName(String name) {
-        return new RuntimeException("Chord; Invalid chord name. '" + name + "'");
     }
 }

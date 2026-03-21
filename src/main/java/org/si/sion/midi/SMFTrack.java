@@ -83,7 +83,7 @@ public class SMFTrack {
                     if ((code & 0x80) != 0) {
                         eventType = code;
                     } else {
-                        if (eventType == -1) throw _errorIncorrectData();
+                        if (eventType == -1) throw new IllegalArgumentException("The SMF File is not good.");
                         bytes.position--;
                     }
 
@@ -183,15 +183,14 @@ public class SMFTrack {
     private boolean _readSystemExclusive(int eventType, ByteArray bytes, int deltaTime, int time) {
         if (eventType != SMFEvent.SYSTEM_EXCLUSIVE && eventType != SMFEvent.SYSTEM_EXCLUSIVE_SHORT) return false;
 
-        int i, b;
         SMFEvent event = new SMFEvent(eventType, 0, deltaTime, time);
         int len = _readVariableLength(bytes, 0);
 
         // read sysex bytes
         event.byteArray = new ByteArray();
         event.byteArray.writeByte(0xf0); // start
-        for (i = 0; i < len; i++) {
-            b = bytes.readUnsignedByte();
+        for (int i = 0; i < len; i++) {
+            int b = bytes.readUnsignedByte();
             event.byteArray.writeByte(b);
         }
 
@@ -205,11 +204,5 @@ public class SMFTrack {
         int t = bytes.readUnsignedByte();
         time += t & 0x7F;
         return ((t & 0x80) != 0) ? _readVariableLength(bytes, time << 7) : time;
-    }
-
-    // error
-    //
-    private RuntimeException _errorIncorrectData() {
-        return new RuntimeException("The SMF File is not good.");
     }
 }

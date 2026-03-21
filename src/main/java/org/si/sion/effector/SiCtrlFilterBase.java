@@ -153,7 +153,7 @@ public class SiCtrlFilterBase extends SiEffectBase {
         startIndex <<= 1;
         length <<= 1;
 
-        int i, imax, istep, c, s, l, r;
+        int i, imax, istep;
         istep = _lfoResidueStep;
         imax = startIndex + length;
         for (i = startIndex; i < imax - istep; ) {

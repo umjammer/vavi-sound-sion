@@ -332,7 +332,7 @@ public class Translator {
                                 int scanFrom = p0;
                                 do {
                                     Matcher braceMatcher = rex_com.matcher(tsscpMML);
-                                    if (!braceMatcher.find(scanFrom)) throw errorTranslation("{{...} ?");
+                                    if (!braceMatcher.find(scanFrom)) throw new IllegalArgumentException("mml error. '" + "{{...} ?" + "'");
                                     if (braceMatcher.group(0).equals("{")) i++;
                                     else if (braceMatcher.group(0).equals("}")) --i;
                                     res = braceMatcher;
@@ -343,7 +343,7 @@ public class Translator {
                             break;
 
                             case "[": {
-                                if (loopMMLBefore != null) throw errorTranslation("[[...] ?");
+                                if (loopMMLBefore != null) throw new IllegalArgumentException("mml error. '" + "[[...] ?" + "'");
                                 loopMacro = false;
                                 loopMMLBefore = mml.toString();
                                 loopMMLContent = null;
@@ -352,13 +352,13 @@ public class Translator {
                             }
                             break;
                             case "|": {
-                                if (loopMMLBefore == null) throw errorTranslation("\"|\" can be only in \"[...]\"");
+                                if (loopMMLBefore == null) throw new IllegalArgumentException("mml error. '" + "\"|\" can be only in \"[...]\"" + "'");
                                 loopMMLContent = mml.toString();
                                 mml = new StringBuilder();
                             }
                             break;
                             case "]": {
-                                if (loopMMLBefore == null) throw errorTranslation("[...]] ?");
+                                if (loopMMLBefore == null) throw new IllegalArgumentException("mml error. '" + "[...]] ?" + "'");
                                 if (!loopMacro && loopOct == octave) {
                                     if (loopMMLContent != null) mml = new StringBuilder(loopMMLBefore + "[" + loopMMLContent + "|" + mml + "]");
                                     else mml = new StringBuilder(loopMMLBefore + "[" + mml + "]");
@@ -372,7 +372,7 @@ public class Translator {
                             break;
 
                             case "}":
-                                throw errorTranslation("{...}} ?");
+                                throw new IllegalArgumentException("mml error. '" + "{...}} ?" + "'");
                             case "@apn":
                             case "x":
                                 break;
@@ -638,7 +638,7 @@ public class Translator {
 
     /** set inside of #AL&#64;{..}; */
     public static SiOPMChannelParam setALParam(SiOPMChannelParam param, Object[] data) {
-        if (data.length != 9) throw errorToneParameterNotValid("#AL@", 9, 0);
+        if (data.length != 9) throw new IllegalArgumentException("Parameter count instanceof not valid in '" + "#AL@" + "'. " + 9 + " parameters for channel and " + 0 + " parameters for each operator.");
         return _setALParamByArray(param, data);
     }
 
@@ -661,7 +661,7 @@ public class Translator {
                     return data;
                 }
             }
-            throw errorToneParameterNotValid(cmd, chParamCount, opParamCount);
+            throw new IllegalArgumentException("Parameter count instanceof not valid in '" + cmd + "'. " + chParamCount + " parameters for channel and " + opParamCount + " parameters for each operator.");
         }
         return null;
     }
@@ -670,7 +670,7 @@ public class Translator {
     private static SiOPMChannelParam _checkOpeCount(SiOPMChannelParam param, int dataLength, int chParamCount, int opParamCount, String cmd) {
         int opeCount = (dataLength - chParamCount) / opParamCount;
         if (opeCount > 4 || opeCount * opParamCount + chParamCount != dataLength)
-            throw errorToneParameterNotValid(cmd, chParamCount, opParamCount);
+            throw new IllegalArgumentException("Parameter count instanceof not valid in '" + cmd + "'. " + chParamCount + " parameters for channel and " + opParamCount + " parameters for each operator.");
         param.opeCount = opeCount;
         return param;
     }
@@ -717,7 +717,7 @@ public class Translator {
         if (param.opeCount == 0) return param;
 
         int alg = SiMMLTable.getInstance().alg_opl[param.opeCount - 1][(int) data[0] & 15];
-        if (alg == -1) throw errorParameterNotValid("#OPL@ algorism", data[0]);
+        if (alg == -1) throw new IllegalArgumentException("Parameter not valid. '" + data[0] + "' in " + "#OPL@ algorism");
 
         param.fratio = 133;
         param.alg = alg;
@@ -750,7 +750,7 @@ public class Translator {
         if (param.opeCount == 0) return param;
 
         int alg = SiMMLTable.getInstance().alg_opm[param.opeCount - 1][((int) data[0]) & 15];
-        if (alg == -1) throw errorParameterNotValid("#OPN@ algorism", data[0]);
+        if (alg == -1) throw new IllegalArgumentException("Parameter not valid. '" + data[0] + "' in " + "#OPN@ algorism");
 
         param.alg = alg;
         param.fb = (int) data[1];
@@ -779,7 +779,7 @@ public class Translator {
         if (param.opeCount == 0) return param;
 
         int alg = SiMMLTable.getInstance().alg_opm[param.opeCount - 1][((int) data[0]) & 15];
-        if (alg == -1) throw errorParameterNotValid("#OPN@ algorism", data[0]);
+        if (alg == -1) throw new IllegalArgumentException("Parameter not valid. '" + data[0] + "' in " + "#OPN@ algorism");
 
         param.alg = alg;
         param.fb = (int) data[1];
@@ -807,7 +807,7 @@ public class Translator {
         if (param.opeCount == 0) return param;
 
         int alg = SiMMLTable.getInstance().alg_opx[param.opeCount - 1][((int) data[0]) & 15];
-        if (alg == -1) throw errorParameterNotValid("#OPX@ algorism", data[0]);
+        if (alg == -1) throw new IllegalArgumentException("Parameter not valid. '" + data[0] + "' in " + "#OPX@ algorism");
 
         param.alg = (alg & 15);
         param.fb = (int) data[1];
@@ -839,7 +839,7 @@ public class Translator {
         if (param.opeCount == 0) return param;
 
         int alg = SiMMLTable.getInstance().alg_ma3[param.opeCount - 1][((int) data[0]) & 15];
-        if (alg == -1) throw errorParameterNotValid("#MA@ algorism", data[0]);
+        if (alg == -1) throw new IllegalArgumentException("Parameter not valid. '" + data[0] + "' in " + "#MA@ algorism");
 
         param.fratio = 133;
         param.alg = alg;
@@ -912,14 +912,14 @@ public class Translator {
         if (param.opeCount == 0) return null;
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opl);
         if (alg == -1)
-            throw errorParameterNotValid("#OPL@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPL@ alg");
         List<Integer> res = new ArrayList<>(List.of(alg, param.fb));
         for (int opeIndex = 0; opeIndex < param.opeCount; opeIndex++) {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             int ws = _pgTypeMA3(opp.pgType);
             int egt = (opp.sr == 0) ? 1 : 0;
             int tl = Math.min(opp.tl, 63);
-            if (ws == -1) throw errorParameterNotValid("#OPL@", "SiOPM ws" + opp.pgType);
+            if (ws == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#OPL@");
             res.addAll(List.of(ws, opp.ar >> 2, opp.dr >> 2, opp.rr >> 2, egt, opp.sl, tl, opp.ksr >> 1, opp.ksl, opp.getMul(), opp.ams));
         }
         return res.stream().mapToInt(re -> re).toArray();
@@ -930,7 +930,7 @@ public class Translator {
         if (param.opeCount == 0) return null;
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opm);
         if (alg == -1)
-            throw errorParameterNotValid("#OPM@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPM@ alg");
         List<Integer> res = new ArrayList<>(List.of(alg, param.fb));
         for (int opeIndex = 0; opeIndex < param.opeCount; opeIndex++) {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
@@ -945,7 +945,7 @@ public class Translator {
         if (param.opeCount == 0) return null;
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opm);
         if (alg == -1)
-            throw errorParameterNotValid("#OPN@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPN@ alg");
         List<Integer> res = new ArrayList<>(List.of(alg, param.fb));
         for (int opeIndex = 0; opeIndex < param.opeCount; opeIndex++) {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
@@ -959,12 +959,12 @@ public class Translator {
         if (param.opeCount == 0) return null;
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opx);
         if (alg == -1)
-            throw errorParameterNotValid("#OPX@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPX@ alg");
         List<Integer> res = new ArrayList<>(List.of(alg, param.fb));
         for (int opeIndex = 0; opeIndex < param.opeCount; opeIndex++) {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             int ws = _pgTypeMA3(opp.pgType);
-            if (ws == -1) throw errorParameterNotValid("#OPX@", "SiOPM ws" + opp.pgType);
+            if (ws == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#OPX@");
             res.addAll(List.of(ws, opp.ar >> 1, opp.dr >> 1, opp.sr >> 1, opp.rr >> 2, opp.sl, opp.tl, opp.ksr, opp.getMul(), opp.dt1, opp.detune, opp.ams));
         }
         return res.stream().mapToInt(re -> re).toArray();
@@ -975,13 +975,13 @@ public class Translator {
         if (param.opeCount == 0) return null;
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_ma3);
         if (alg == -1)
-            throw errorParameterNotValid("#MA@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#MA@ alg");
         List<Integer> res = new ArrayList<>(List.of(alg, param.fb));
         for (int opeIndex = 0; opeIndex < param.opeCount; opeIndex++) {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             int ws = _pgTypeMA3(opp.pgType);
             int tl = Math.min(opp.tl, 63);
-            if (ws == -1) throw errorParameterNotValid("#MA@", "SiOPM ws" + opp.pgType);
+            if (ws == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#MA@");
             res.addAll(List.of(ws, opp.ar >> 2, opp.dr >> 2, opp.sr >> 2, opp.rr >> 2, opp.sl, tl, opp.ksr >> 1, opp.ksl, opp.getMul(), opp.dt1, opp.ams));
         }
         return res.stream().mapToInt(re -> re).toArray();
@@ -1060,7 +1060,7 @@ public class Translator {
 
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opl);
         if (alg == -1)
-            throw errorParameterNotValid("#OPL@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPL@ alg");
 
         StringBuilder mml = new StringBuilder();
         Map<String, Integer> res = _checkDigit(param);
@@ -1075,7 +1075,7 @@ public class Translator {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             mml.append(lineEnd);
             pgType = _pgTypeMA3(opp.pgType);
-            if (pgType == -1) throw errorParameterNotValid("#OPL@", "SiOPM ws" + opp.pgType);
+            if (pgType == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#OPL@");
             mml.append(pgType).append(separator);              // ws
             mml.append(_str(opp.ar >> 2, 2)).append(separator);        // ar
             mml.append(_str(opp.dr >> 2, 2)).append(separator);        // dr
@@ -1107,7 +1107,7 @@ public class Translator {
 
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opm);
         if (alg == -1)
-            throw errorParameterNotValid("#OPM@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPM@ alg");
 
         StringBuilder mml = new StringBuilder();
         Map<String, Integer> res = _checkDigit(param);
@@ -1153,7 +1153,7 @@ public class Translator {
 
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opm);
         if (alg == -1)
-            throw errorParameterNotValid("#OPN@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPN@ alg");
 
         StringBuilder mml = new StringBuilder();
         Map<String, Integer> res = _checkDigit(param);
@@ -1198,7 +1198,7 @@ public class Translator {
 
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_opx);
         if (alg == -1)
-            throw errorParameterNotValid("#OPX@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#OPX@ alg");
 
         StringBuilder mml = new StringBuilder();
         Map<String, Integer> res = _checkDigit(param);
@@ -1213,7 +1213,7 @@ public class Translator {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             mml.append(lineEnd);
             pgType = _pgTypeMA3(opp.pgType);
-            if (pgType == -1) throw errorParameterNotValid("#OPX@", "SiOPM ws" + opp.pgType);
+            if (pgType == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#OPX@");
             mml.append(pgType).append(separator);              // ws
             mml.append(_str(opp.ar >> 1, 2)).append(separator);        // ar
             mml.append(_str(opp.dr >> 1, 2)).append(separator);        // dr
@@ -1246,7 +1246,7 @@ public class Translator {
 
         int alg = _checkAlgorism(param.opeCount, param.alg, SiMMLTable.getInstance().alg_ma3);
         if (alg == -1)
-            throw errorParameterNotValid("#MA@ alg", "SiOPM opc" + param.opeCount + "/alg" + param.alg);
+            throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM opc" + param.opeCount + "/alg" + param.alg + "' in " + "#MA@ alg");
 
         StringBuilder mml = new StringBuilder();
         Map<String, Integer> res = _checkDigit(param);
@@ -1261,7 +1261,7 @@ public class Translator {
             SiOPMOperatorParam opp = param.operatorParam[opeIndex];
             mml.append(lineEnd);
             pgType = _pgTypeMA3(opp.pgType);
-            if (pgType == -1) throw errorParameterNotValid("#MA@", "SiOPM ws" + opp.pgType);
+            if (pgType == -1) throw new IllegalArgumentException("Parameter not valid. '" + "SiOPM ws" + opp.pgType + "' in " + "#MA@");
             mml.append(_str(pgType, 2)).append(separator);                 // ws
             mml.append(_str(opp.ar >> 2, 2)).append(separator);            // ar
             mml.append(_str(opp.dr >> 2, 2)).append(separator);            // dr
@@ -1664,7 +1664,7 @@ public class Translator {
                 // interpolation "(res.group(2)..),res.group(3)"
                 array = String.valueOf(res.group(2)).split( "[,\\s]+ ");
                 imax = Integer.parseInt(res.group(3));
-                if (imax < 2 || array.length < 1) throw errorParameterNotValid("Table MML", tableNumbers);
+                if (imax < 2 || array.length < 1) throw new IllegalArgumentException("Parameter not valid. '" + tableNumbers + "' in " + "Table MML");
                 itpl = new int[array.length];
                 for (i = 0; i < itpl.length; i++) {
                     itpl[i] = Integer.parseInt(array[i]);
@@ -1711,9 +1711,9 @@ public class Translator {
                         loopStac.add(last);
                         break;
                     default: // end loop "]n"
-                        if (loopStac.isEmpty()) throw errorParameterNotValid("Table MML's Loop", tableNumbers);
+                        if (loopStac.isEmpty()) throw new IllegalArgumentException("Parameter not valid. '" + tableNumbers + "' in " + "Table MML's Loop");
                         loopHead = loopStac.remove(loopStac.size() - 1).next;
-                        if (loopHead == null) throw errorParameterNotValid("Table MML's Loop", tableNumbers);
+                        if (loopHead == null) throw new IllegalArgumentException("Parameter not valid. '" + tableNumbers + "' in " + "Table MML's Loop");
                         loopTail = last;
                         for (j = Integer.parseInt(res.group(6)) != 0 ? Integer.parseInt(res.group(6)) : 2; j > 0; --j) {
                             for (l = loopHead; l != loopTail.next; l = l.next) {
@@ -1725,7 +1725,7 @@ public class Translator {
                 }
             } else {
                 // unknown error
-                throw errorUnknown("@parseWav()");
+                throw new IllegalArgumentException("Unknown. " + "@parseWav()");
             }
             res = regexp.matcher(tableNumbers);
         }
@@ -2085,23 +2085,5 @@ public class Translator {
         int i;
         for (i = 1; i < 128; i++) if (tl0 >= tltable[i]) return i - 64;
         return 64;
-    }
-
-    // errors
-    //
-    public static RuntimeException errorToneParameterNotValid(String cmd, int chParam, int opParam) {
-        return new RuntimeException("Translator error : Parameter count instanceof not valid in '" + cmd + "'. " + chParam + " parameters for channel and " + opParam + " parameters for each operator.");
-    }
-
-    public static RuntimeException errorParameterNotValid(String cmd, Object param) {
-        return new RuntimeException("Translator error : Parameter not valid. '" + param + "' in " + cmd);
-    }
-
-    public RuntimeException errorTranslation(String str) {
-        return new RuntimeException("Translator Error : mml error. '" + str + "'");
-    }
-
-    public static RuntimeException errorUnknown(String str) {
-        return new RuntimeException("Translator error : Unknown. " + str);
     }
 }

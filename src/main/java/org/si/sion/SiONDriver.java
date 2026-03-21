@@ -6,12 +6,17 @@
 
 package org.si.sion;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.si.as3.events.SampleDataEvent;
-
+import org.si.as3.media.Sound;
+import org.si.as3.media.SoundChannel;
+import org.si.as3.media.SoundTransform;
+import org.si.as3.net.URLRequest;
 import org.si.sion.effector.SiEffectModule;
 import org.si.sion.events.SiONEvent;
 import org.si.sion.events.SiONMIDIEvent;
@@ -43,57 +48,46 @@ import org.si.utils.ErrorEvent;
 import org.si.utils.Event;
 import org.si.utils.EventDispatcher;
 import org.si.utils.SLLint;
-import org.si.as3.media.Sound;
-import org.si.as3.media.SoundChannel;
-import org.si.as3.media.SoundTransform;
-import org.si.as3.net.URLRequest;
-
-
-// Dispatching events
-/** @eventType org.si.sion.events.SiONEvent.QUEUE_PROGRESS */
-// [Event(name=SiONEvent.QUEUE_PROGRESS,   type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.QUEUE_COMPLETE */
-// [Event(name=SiONEvent.QUEUE_COMPLETE,   type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.QUEUE_CANCEL */
-// [Event(name=SiONEvent.QUEUE_CANCEL,     type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.STREAM */
-// [Event(name=SiONEvent.STREAM,          type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.STREAM_START */
-// [Event(name=SiONEvent.STREAM_START,     type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.STREAM_STOP */
-// [Event(name=SiONEvent.STREAM_STOP,      type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.FINISH_SEQUENCE */
-// [Event(name=SiONEvent.FINISH_SEQUENCE,  type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.FADE_PROGRESS */
-// [Event(name=SiONEvent.FADE_PROGRESS,    type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.FADE_IN_COMPLETE */
-// [Event(name=SiONEvent.FADE_IN_COMPLETE,  type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONEvent.FADE_OUT_COMPLETE */
-// [Event(name=SiONEvent.FADE_OUT_COMPLETE, type="org.si.sion.events.SiONEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.NOTE_ON_STREAM */
-// [Event(name=SiONTrackEvent.NOTE_ON_STREAM,    type="org.si.sion.events.SiONTrackEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.NOTE_OFF_STREAM */
-// [Event(name=SiONTrackEvent.NOTE_OFF_STREAM,   type="org.si.sion.events.SiONTrackEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.NOTE_ON_FRAME */
-// [Event(name=SiONTrackEvent.NOTE_ON_FRAME,     type="org.si.sion.events.SiONTrackEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.NOTE_OFF_FRAME */
-// [Event(name=SiONTrackEvent.NOTE_OFF_FRAME,    type="org.si.sion.events.SiONTrackEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.BEAT */
-// [Event(name=SiONTrackEvent.BEAT,            type="org.si.sion.events.SiONTrackEvent")]
-/** @eventType org.si.sion.events.SiONTrackEvent.CHANGE_BPM */
-// [Event(name=SiONTrackEvent.CHANGE_BPM,       type="org.si.sion.events.SiONTrackEvent")]
 
 
 /**
- * SiONDriver class provides the driver of SiON's digital signal processor emulator. SiON's all basic operations are ((SiONDriver) provided)'s properties, methods and events. You can create only one SiONDriver instance in one SWF file, and the error appears when you try to create plural SiONDrivers.<br/>
- *
- * @example 1) The simplest sample. Create new instance and call play with MML string.<br/>
+ * SiONDriver class provides the driver of SiON's digital signal processor emulator.
+ * SiON's all basic operations are ((SiONDriver) provided)'s properties, methods and events.
+ * You can create only one SiONDriver instance in one SWF file, and the error appears
+ * when you try to create plural SiONDrivers.
+ * <p>
+ * Dispatching events
+ * <li> org.si.sion.events.SiONEvent.QUEUE_PROGRESS
+ * <li> org.si.sion.events.SiONEvent.QUEUE_COMPLETE
+ * <li> org.si.sion.events.SiONEvent.QUEUE_CANCEL
+ * <li> org.si.sion.events.SiONEvent.STREAM
+ * <li> org.si.sion.events.SiONEvent.STREAM_START
+ * <li> org.si.sion.events.SiONEvent.STREAM_STOP
+ * <li> org.si.sion.events.SiONEvent.FINISH_SEQUENCE
+ * <li> org.si.sion.events.SiONEvent.FADE_PROGRESS
+ * <li> org.si.sion.events.SiONEvent.FADE_IN_COMPLETE
+ * <li> org.si.sion.events.SiONEvent.FADE_OUT_COMPLETE
+ * <li> org.si.sion.events.SiONTrackEvent.NOTE_ON_STREAM
+ * <li> org.si.sion.events.SiONTrackEvent.NOTE_OFF_STREAM
+ * <li> org.si.sion.events.SiONTrackEvent.NOTE_ON_FRAME
+ * <li> org.si.sion.events.SiONTrackEvent.NOTE_OFF_FRAME
+ * <li> org.si.sion.events.SiONTrackEvent.BEAT
+ * <li> org.si.sion.events.SiONTrackEvent.CHANGE_BPM
+ * </p>
+ * <p>
+ * system properties
+ * <li>{@code org.si.sion.allowPluralDrivers} ... allows plural drivers or not, default {@code false}</li>
+ * <li>{@code org.si.sion.maxPolyphony} ... max polyphony, default 64</li>
+ * <li>{@code org.si.sion.systemExclusiveMode} ... system exclusive mode, default {@code MidiModule#GM_MODE}</li>
+ * <p>
+ * example 1) The simplest sample. Create new instance and call play with MML string.
  * <pre>
  * // create driver instance.
  * SiONDriver driver = new SiONDriver();
  * // call play() with mml string whenever you want to play sound.
  * driver.play("t100 l8 [ ccggaag4 ffeeddc4 | [ggffeed4]2 ]2");
  * </pre>
+ *
  * @see SiONData
  * @see SiONVoice
  * @see SiONEvent
@@ -103,6 +97,8 @@ import org.si.as3.net.URLRequest;
  * @see SiEffectModule
  */
 public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
+
+    private static final Logger logger = System.getLogger(SiONDriver.class.getName());
 
     // constants
     //
@@ -141,86 +137,172 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     /** Sequencer module instance. */
     public SiMMLSequencer sequencer;
 
-    // private:
     // general
-    private SiONData _data;         // data to compile or process
-    private SiONData _tempData;     // temporary data
-    private String _mmlString;      // mml string of previous compiling
+
+    /** data to compile or process */
+    private SiONData _data;
+    /** temporary data */
+    private SiONData _tempData;
+    /** mml string of previous compiling */
+    private String _mmlString;
+
     // sound related
-    private Sound _sound;                   // sound stream instance
-    private SoundChannel _soundChannel;     // sound channel instance
-    private SoundTransform _soundTransform; // sound transform
-    private final Fader _fader;                   // sound fader
+
+    /** sound stream instance */
+    private Sound _sound;
+    /** sound channel instance */
+    private SoundChannel _soundChannel;
+    /** sound transform */
+    private SoundTransform _soundTransform;
+    /** sound fader */
+    private final Fader _fader;
+
     // SiOPM DSP module related
-    private final int _channelCount;          // module output channels (1 or 2)
-    private final double _sampleRate;         // module output frequency ratio (44100 or 22050)
-    private final int _bitRate;               // module output bitrate
-    private final int _bufferLength;          // module and streaming buffer size (8192, 4096 or 2048)
-    private boolean _debugMode;         // true; throw Error, false; throw ErrorEvent
-    private boolean _dispatchStreamEvent; // dispatch steam event
-    private boolean _dispatchFadingEvent; // dispatch fading event
-    private boolean _inStreaming;         // in streaming
-    private boolean _preserveStop;        // preserve stop after streaming
-    private boolean _suspendStreaming;      // suspend streaming
-    private boolean _suspendWhileLoading;   // suspend starting steam while loading
-    private Object[] _loadingSoundList;        // loading sound list
-    private boolean _isFinishSeqDispatched; // FINISH_SEQUENCE event already dispacthed
+
+    /** module output channels (1 or 2) */
+    private final int _channelCount;
+    /** module output frequency ratio (44100 or 22050) */
+    private final double _sampleRate;
+    /** module output bitrate */
+    private final int _bitRate;
+    /** module and streaming buffer size (8192, 4096 or 2048) */
+    private final int _bufferLength;
+    /** true; throw Error, false; throw ErrorEvent */
+    private boolean _debugMode;
+    /** dispatch steam event */
+    private boolean _dispatchStreamEvent;
+    /** dispatch fading event */
+    private boolean _dispatchFadingEvent;
+    /** in streaming */
+    private boolean _inStreaming;
+    /** preserve stop after streaming */
+    private boolean _preserveStop;
+    /** suspend streaming */
+    private boolean _suspendStreaming;
+    /** suspend starting steam while loading */
+    private boolean _suspendWhileLoading;
+    /** loading sound list */
+    private Object[] _loadingSoundList;
+    /** FINISH_SEQUENCE event already dispacthed */
+    private boolean _isFinishSeqDispatched;
+
     // operation related
-    private boolean _autoStop;          // auto stop when the sequence finished
-    private int _noteOnExceptionMode;   // track id exception mode
-    private boolean _isPaused;          // flag to pause
-    private double _position;           // start position [ms]
-    private double _masterVolume;       // master volume
-    private double _faderVolume;        // fader volume
+
+    /** auto stop when the sequence finished */
+    private boolean _autoStop;
+    /** track id exception mode */
+    private int _noteOnExceptionMode;
+    /** flag to pause */
+    private boolean _isPaused;
+    /** start position [ms] */
+    private double _position;
+    /** master volume */
+    private double _masterVolume;
+    /** fader volume */
+    private double _faderVolume;
     private boolean _dispatchChangeBPMEventWhenPositionChanged;
+
     // background sound
-    private Sound _backgroundSound;                 // background Sound
-    private double _backgroundLoopPoint;            // loop point (in seconds)
-    private int _backgroundFadeOutFrames;           // fading out frames
-    private int _backgroundFadeInFrames;            // fading in frames
-    private int _backgroundFadeGapFrames;           // fading gap frames
-    private int _backgroundTotalFadeFrames;         // total fading in frames
-    private final SiONVoice _backgroundVoice;             // voice
-    private SiOPMWaveSamplerData _backgroundSample; // sampling data
-    private SiMMLTrack _backgroundTrack;            // track for background Sound
-    private SiMMLTrack _backgroundTrackFadeOut;     // track for background Sound's cross fading
+
+    /** background Sound */
+    private Sound _backgroundSound;
+    /** loop point (in seconds) */
+    private double _backgroundLoopPoint;
+    /** fading out frames */
+    private int _backgroundFadeOutFrames;
+    /** fading in frames */
+    private int _backgroundFadeInFrames;
+    /** fading gap frames */
+    private int _backgroundFadeGapFrames;
+    /** total fading in frames */
+    private int _backgroundTotalFadeFrames;
+    /** voice */
+    private final SiONVoice _backgroundVoice;
+    /** sampling data */
+    private SiOPMWaveSamplerData _backgroundSample;
+    /** track for background Sound */
+    private SiMMLTrack _backgroundTrack;
+    /** track for background Sound's cross fading */
+    private SiMMLTrack _backgroundTrackFadeOut;
+
     // queue
-    private int _queueInterval;         // interupting interval to execute queued jobs
-    private int _queueLength;           // queue length to execute
-    private double _jobProgress;        // progression of current job
-    private int _currentJob;            // current job 0=no job, 1=compile, 2=render
-    private List<SiONDriverJob> _jobQueue = null;   // compiling/rendering jobs queue
-    private List<SiONTrackEvent> _trackEventQueue;  // SiONTrackEvents queue
+
+    /** interupting interval to execute queued jobs */
+    private int _queueInterval;
+    /** queue length to execute */
+    private int _queueLength;
+    /** progression of current job */
+    private double _jobProgress;
+    /** current job 0=no job, 1=compile, 2=render */
+    private int _currentJob;
+    /** compiling/rendering jobs queue */
+    private List<SiONDriverJob> _jobQueue = null;
+    /** SiONTrackEvents queue */
+    private List<SiONTrackEvent> _trackEventQueue;
+
     // timer interruption
-    private final MMLSequence _timerSequence;     // global sequence
-    private final MMLEvent _timerIntervalEvent;   // MMLEvent.GLOBAL_WAIT event
-    private Runnable _timerCallback;        // callback function
+
+    /** global sequence */
+    private final MMLSequence _timerSequence;
+    /** MMLEvent.GLOBAL_WAIT event */
+    private final MMLEvent _timerIntervalEvent;
+    /** callback function */
+    private Runnable _timerCallback;
+
     // rendering
-    private double[] _renderBuffer;  // rendering buffer
-    private int _renderBufferChannelCount;  // rendering buffer channel count
-    private int _renderBufferIndex;         // rendering buffer writing index
-    private int _renderBufferSizeMax;       // maximum value of rendering buffer size
+
+    /** rendering buffer */
+    private double[] _renderBuffer;
+    /** rendering buffer channel count */
+    private int _renderBufferChannelCount;
+    /** rendering buffer writing index */
+    private int _renderBufferIndex;
+    /** maximum value of rendering buffer size */
+    private int _renderBufferSizeMax;
+
     // timers
-    private int _timeCompile;           // previous compiling time.
-    private int _timeRender;            // previous rendering time.
-    private int _timeProcess;           // averge processing time in 1sec.
-    private int _timeProcessTotal;      // total processing time in last 8 bufferings.
-    private SLLint _timeProcessData;    // processing time data of last 8 bufferings.
-    private final double _timeProcessAveRatio;// number to averaging _timeProcessTotal
-    private int _timePrevStream;        // previous streaming time.
-    private double _latency;            // streaming latency [ms]
-    private int _prevFrameTime;         // previous frame time
-    private int _frameRate;             // frame rate
+
+    /** previous compiling time. */
+    private int _timeCompile;
+    /** previous rendering time. */
+    private int _timeRender;
+    /** averge processing time in 1sec. */
+    private int _timeProcess;
+    /** total processing time in last 8 bufferings. */
+    private int _timeProcessTotal;
+    /** processing time data of last 8 bufferings. */
+    private SLLint _timeProcessData;
+    /** number to averaging _timeProcessTotal */
+    private final double _timeProcessAveRatio;
+    /** previous streaming time. */
+    private int _timePrevStream;
+    /** streaming latency [ms] */
+    private double _latency;
+    /** previous frame time */
+    private int _prevFrameTime;
+    /** frame rate */
+    private int _frameRate;
+
     // listeners management
-    private final int _eventListenerPrior;    // event listeners priority
-    private int _listenEvent;           // current lintening event
+
+    /** event listeners priority */
+    private final int _eventListenerPrior;
+    /** current lintening event */
+    private int _listenEvent;
+
     // MIDI related
-    private final MIDIModule _midiModule;                 // midi sound module
-    private final SiONDataConverterSMF _midiConverter;    // SMF data converter
+
+    /** midi sound module */
+    private final MIDIModule _midiModule;
+    /** SMF data converter */
+    private final SiONDataConverterSMF _midiConverter;
 
     // mutex instance
-    private static SiONDriver _mutex = null;            // unique instance
-    private static boolean _allowPluralDrivers = Boolean.getBoolean("org.si.sion.allowPluralDrivers"); // allow plural drivers
+
+    /** unique instance */
+    private static SiONDriver _mutex = null;
+    /** allow plural drivers */
+    private static boolean _allowPluralDrivers = Boolean.getBoolean("org.si.sion.allowPluralDrivers");
 
     // properties
     //
@@ -444,7 +526,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     public void setBpm(double t) {
         sequencer.setting.defaultBPM = t;
         if (sequencer.isReadyToProcess()) {
-            if (!sequencer.isEnableChangeBPM()) throw errorCannotChangeBPM();
+            if (!sequencer.isEnableChangeBPM()) throw new UnsupportedOperationException("Cannot change bpm while rendering (SiONTrackEvent.NOTE_*_STREAM).");
             sequencer._bpm.update(t, (int) _sampleRate);
         }
     }
@@ -523,18 +605,18 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      */
     public SiONDriver(int bufferLength /* = 2048 */, int channelCount /* = 2 */, int sampleRate /* = 44100 */, int bitRate /* = 0 */) {
         // check mutex
-        if (_mutex != null && !_allowPluralDrivers) throw errorPluralDrivers();
+        if (_mutex != null && !_allowPluralDrivers) throw new IllegalStateException("Cannot create pulral SiONDrivers.");
 
         // check parameters
         if (bufferLength < 128)
-            throw errorParamNotAvailable("stream buffer", bufferLength);
-        if (channelCount != 1 && channelCount != 2) throw errorParamNotAvailable("channel count", channelCount);
-        if (sampleRate != 44100) throw errorParamNotAvailable("sampling rate", sampleRate);
+            throw new IllegalArgumentException("Parameter not available. " + "stream buffer" + ", " + (double) bufferLength);
+        if (channelCount != 1 && channelCount != 2) throw new IllegalArgumentException("Parameter not available. " + "channel count" + ", " + (double) channelCount);
+        if (sampleRate != 44100) throw new IllegalArgumentException("Parameter not available. " + "sampling rate" + ", " + (double) sampleRate);
 
         // initialize tables
         Object dummy;
-        dummy = SiOPMTable.getInstance(); //initialize(3580000, 1789772.5, 44100) sampleRate;
-        dummy = SiMMLTable.getInstance(); //initialize();
+        dummy = SiOPMTable.getInstance(); // initialize(3580000, 1789772.5, 44100) sampleRate;
+        dummy = SiMMLTable.getInstance(); // initialize();
 
         // allocation
         _jobQueue = new ArrayList<>();
@@ -546,7 +628,10 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         _fader = new Fader();
         _timerSequence = new MMLSequence(false);
         _loadingSoundList = new Object[0];
-        _midiModule = new MIDIModule(64, 16, "gm");
+        int maxPolyphony = Integer.getInteger("org.si.sion.maxPolyphony", 64);
+        String systemExclusiveMode = System.getProperty("org.si.sion.systemExclusiveMode", MIDIModule.GM_MODE);
+logger.log(Level.DEBUG, "maxPolyphony: " + maxPolyphony + ", systemExclusiveMode: " + systemExclusiveMode);
+        _midiModule = new MIDIModule(maxPolyphony, 16, systemExclusiveMode);
         _midiConverter = new SiONDataConverterSMF(null, _midiModule);
 
         // initialize
@@ -637,15 +722,17 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
             stop();
 
             // compile immediately
-            int t = (int)System.currentTimeMillis();
+            int t = (int) System.currentTimeMillis();
             _prepareCompile(mml, data);
             _jobProgress = sequencer.compile(0);
-            _timeCompile = (int)System.currentTimeMillis() - t;
+            _timeCompile = (int) System.currentTimeMillis() - t;
             _mmlString = null;
         } catch (Exception e) {
             // error
             if (_debugMode) throw e;
-            else { e.printStackTrace(); }
+            else {
+                logger.log(Level.ERROR, e.getMessage(), e);
+            }
             // else dispatchEvent(new ErrorEvent("error", false, false, e.message));
         }
 
@@ -684,17 +771,19 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
             stop();
 
             // rendering immediately
-            int t = (int)System.currentTimeMillis();
+            int t = (int) System.currentTimeMillis();
             _prepareRender(data, renderBuffer, renderBufferChannelCount, resetEffector);
             while (true) {
                 if (_rendering()) break;
             }
-            _timeRender = (int)System.currentTimeMillis() - t;
+            _timeRender = (int) System.currentTimeMillis() - t;
         } catch (Exception e) {
             // error
             _removeAllEventListeners();
             if (_debugMode) throw e;
-            else { e.printStackTrace(); }
+            else {
+                logger.log(Level.ERROR, e.getMessage(), e);
+            }
             // else dispatchEvent(new ErrorEvent("error", false, false, e.message));
         }
 
@@ -723,9 +812,11 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
             return _jobQueue.size();
         }
 
-        RuntimeException e = errorDataIncorrect();
+        RuntimeException e = new IllegalArgumentException("data incorrect in play() or render().");
         if (_debugMode) throw e;
-        else { e.printStackTrace(); }
+        else {
+            logger.log(Level.ERROR, e.getMessage(), e);
+        }
         // else dispatchEvent(new ErrorEvent("error", false, false, e.message));
         return _jobQueue.size();
     }
@@ -759,7 +850,9 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
             _removeAllEventListeners();
             _cancelAllJobs();
             if (_debugMode) throw e;
-            else { e.printStackTrace(); }
+            else {
+                logger.log(Level.ERROR, e.getMessage(), e);
+            }
             // else dispatchEvent(new ErrorEvent("error", false, false, e.message));
         }
         return _queueLength;
@@ -834,7 +927,9 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         } catch (Exception e) {
             // error
             if (_debugMode) throw e;
-            else { e.printStackTrace(); }
+            else {
+                logger.log(Level.ERROR, e.getMessage(), e);
+            }
             // else dispatchEvent(new ErrorEvent("error", false, false, e.message));
         }
 
@@ -913,9 +1008,9 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      */
     public void setBackgroundSoundFadeTime(double fadeInTime, double fadeOutTime, double gapTime) {
         double t2f = _sampleRate / _bufferLength;
-        _backgroundFadeInFrames = (int)(fadeInTime * t2f);
-        _backgroundFadeOutFrames = (int)(fadeOutTime * t2f);
-        _backgroundFadeGapFrames = (int)(gapTime * t2f);
+        _backgroundFadeInFrames = (int) (fadeInTime * t2f);
+        _backgroundFadeOutFrames = (int) (fadeOutTime * t2f);
+        _backgroundFadeGapFrames = (int) (gapTime * t2f);
         _backgroundTotalFadeFrames = _backgroundFadeOutFrames + _backgroundFadeInFrames + _backgroundFadeGapFrames;
     }
 
@@ -946,7 +1041,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      * @param callback   Callback function. the Type instanceof function():void.
      */
     public void setTimerInterruption(double length16th, Runnable callback) {
-        _timerIntervalEvent.length = (int)(length16th * sequencer.setting.resolution * 0.0625);
+        _timerIntervalEvent.length = (int) (length16th * sequencer.setting.resolution * 0.0625);
         _timerCallback = (length16th > 0) ? callback : null;
     }
 
@@ -1089,7 +1184,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      * @param voice voice to register.
      */
     public void setVoice(int index, SiONVoice voice) {
-        if (!voice.isSuitableForFMVoice()) throw errorNotGoodFMVoice();
+        if (!voice.isSuitableForFMVoice()) throw new IllegalArgumentException("Cannot register the voice.");
         SiMMLTable.registerMasterVoice(index, voice);
     }
 
@@ -1132,13 +1227,13 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         // check track id exception
         if (_noteOnExceptionMode != NEM_IGNORE) {
             // find a track sounds at same timing
-            mmlTrack = sequencer._findActiveTrack(internalTrackID, (int)delaySamples);
+            mmlTrack = sequencer._findActiveTrack(internalTrackID, (int) delaySamples);
             if (_noteOnExceptionMode == NEM_REJECT && mmlTrack != null) return null; // reject
             else if (_noteOnExceptionMode == NEM_SHIFT) { // shift timing
                 int step = (int) sequencer.calcSampleLength(quant);
                 while (mmlTrack != null) {
                     delaySamples += step;
-                    mmlTrack = sequencer._findActiveTrack(internalTrackID, (int)delaySamples);
+                    mmlTrack = sequencer._findActiveTrack(internalTrackID, (int) delaySamples);
                 }
             }
         }
@@ -1146,7 +1241,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         if (mmlTrack == null) mmlTrack = sequencer._newControlableTrack(internalTrackID, isDisposable);
         if (mmlTrack != null) {
             mmlTrack.setChannelModuleType(10, 0, 0);
-            mmlTrack.keyOn(sampleNumber, (int)(length * sequencer.setting.resolution * 0.0625), (int)delaySamples);
+            mmlTrack.keyOn(sampleNumber, (int) (length * sequencer.setting.resolution * 0.0625), (int) delaySamples);
         }
         return mmlTrack;
     }
@@ -1174,13 +1269,13 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         // check track id exception
         if (_noteOnExceptionMode != NEM_IGNORE) {
             // find a track sounds at same timing
-            mmlTrack = sequencer._findActiveTrack(internalTrackID, (int)delaySamples);
+            mmlTrack = sequencer._findActiveTrack(internalTrackID, (int) delaySamples);
             if (_noteOnExceptionMode == NEM_REJECT && mmlTrack != null) return null; // reject
             else if (_noteOnExceptionMode == NEM_SHIFT) { // shift timing
                 int step = (int) sequencer.calcSampleLength(quant);
                 while (mmlTrack != null) {
                     delaySamples += step;
-                    mmlTrack = sequencer._findActiveTrack(internalTrackID, (int)delaySamples);
+                    mmlTrack = sequencer._findActiveTrack(internalTrackID, (int) delaySamples);
                 }
             }
         }
@@ -1188,7 +1283,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         if (mmlTrack == null) mmlTrack = sequencer._newControlableTrack(internalTrackID, isDisposable);
         if (mmlTrack != null) {
             if (voice != null) voice.updateTrackVoice(mmlTrack);
-            mmlTrack.keyOn(note, (int)(length * sequencer.setting.resolution * 0.0625), (int)delaySamples);
+            mmlTrack.keyOn(note, (int) (length * sequencer.setting.resolution * 0.0625), (int) delaySamples);
         }
         return mmlTrack;
     }
@@ -1205,7 +1300,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      */
     public List<SiMMLTrack> noteOff(int note, int trackID, double delay, double quant, boolean stopImmediately) {
         int internalTrackID = (trackID & SiMMLTrack.TRACK_ID_FILTER) | SiMMLTrack.DRIVER_NOTE;
-        int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
+        int delaySamples = (int) sequencer.calcSampleDelay(0, delay, quant);
         int n;
         List<SiMMLTrack> tracks = new ArrayList<>();
         for (SiMMLTrack mmlTrack : sequencer.tracks) {
@@ -1243,8 +1338,8 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         SiMMLTrack mmlTrack;
         List<SiMMLTrack> tracks = new ArrayList<>();
         MMLSequence seq = data.sequenceGroup.getHeadSequence();
-        int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
-        int lengthSamples = (int)sequencer.calcSampleLength(length);
+        int delaySamples = (int) sequencer.calcSampleDelay(0, delay, quant);
+        int lengthSamples = (int) sequencer.calcSampleLength(length);
 
         // create new sequence tracks
         while (seq != null) {
@@ -1270,7 +1365,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
      */
     public List<SiMMLTrack> sequenceOff(int trackID, double delay, double quant, boolean stopWithReset) {
         int internalTrackID = (trackID & SiMMLTrack.TRACK_ID_FILTER) | SiMMLTrack.DRIVER_SEQUENCE;
-        int delaySamples = (int)sequencer.calcSampleDelay(0, delay, quant);
+        int delaySamples = (int) sequencer.calcSampleDelay(0, delay, quant);
         SiMMLTrack stoppedTrack = null;
         List<SiMMLTrack> tracks = new ArrayList<>();
         for (SiMMLTrack mmlTrack : sequencer.tracks) {
@@ -1357,14 +1452,14 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
 
     // add all event listeners
     private void _queue_addAllEventListeners() {
-        if (_listenEvent != NO_LISTEN) throw errorDriverBusy(LISTEN_QUEUE);
+        if (_listenEvent != NO_LISTEN) throw new IllegalStateException("SiONDriver error: Driver busy. Call " + states[LISTEN_QUEUE] + " while " + states[_listenEvent] + ".");
         // addEventListener(Event.ENTER_FRAME, _queue_onEnterFrame, false, _eventListenerPrior);
         _listenEvent = LISTEN_QUEUE;
     }
 
     // add all event listeners
     private void _process_addAllEventListeners() {
-        if (_listenEvent != NO_LISTEN) throw errorDriverBusy(LISTEN_PROCESS);
+        if (_listenEvent != NO_LISTEN) throw new IllegalStateException("SiONDriver error: Driver busy. Call " + states[LISTEN_PROCESS] + " while " + states[_listenEvent] + ".");
         // addEventListener(Event.ENTER_FRAME, _process_onEnterFrame, false, _eventListenerPrior);
         /*
         if (hasEventListener(SiONTrackEvent.BEAT)) sequencer._setBeatCallback(_callbackBeat);
@@ -1455,22 +1550,22 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     private void _queue_onEnterFrame() {
         try {
             SiONEvent event;
-            int t = (int)System.currentTimeMillis();
+            int t = (int) System.currentTimeMillis();
 
             switch (_currentJob) {
                 case 1: // compile
                     _jobProgress = sequencer.compile(_queueInterval);
-                    _timeCompile += (int)System.currentTimeMillis() - t;
+                    _timeCompile += (int) System.currentTimeMillis() - t;
                     break;
                 case 2: // render
                     _jobProgress += (1 - _jobProgress) * 0.5;
-                    while ((int)System.currentTimeMillis() - t <= _queueInterval) {
+                    while ((int) System.currentTimeMillis() - t <= _queueInterval) {
                         if (_rendering()) {
                             _jobProgress = 1;
                             break;
                         }
                     }
-                    _timeRender += (int)System.currentTimeMillis() - t;
+                    _timeRender += (int) System.currentTimeMillis() - t;
                     break;
             }
 
@@ -1489,7 +1584,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
             _removeAllEventListeners();
             _cancelAllJobs();
             if (_debugMode) throw new RuntimeException(e);
-            else e.printStackTrace();
+            else logger.log(Level.ERROR, e.getMessage(), e);
         }
     }
 
@@ -1599,7 +1694,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
                 _data = _midiConverter;
             } else {
                 // not good data type
-                throw errorDataIncorrect();
+                throw new IllegalArgumentException("data incorrect in play() or render().");
             }
         }
 
@@ -1634,7 +1729,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
     // on enterFrame
     private void _process_onEnterFrame(Event e) {
         // frame rate
-        int t = (int)System.currentTimeMillis();
+        int t = (int) System.currentTimeMillis();
         _frameRate = t - _prevFrameTime;
         _prevFrameTime = t;
 
@@ -1803,7 +1898,10 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         if (sound != null) {
             if (sound.bytesTotal == 0 || sound.bytesLoaded != sound.bytesTotal) {
                 sound.addEventListener("complete", this::_onBackgroundSoundLoaded);
-                sound.addEventListener("ioError", this::_errorBackgroundSound);
+                sound.addEventListener("ioError", e -> {
+                    _backgroundSound = null;
+                    throw new IllegalArgumentException("fail to load the sound file");
+                });
             } else {
                 _backgroundSound = sound;
                 if (isPlaying()) _startBackgroundSound();
@@ -1875,12 +1973,6 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         }
     }
 
-    // error
-    private void _errorBackgroundSound(Event e) {
-        _backgroundSound = null;
-        throw errorSoundLoadingFailure();
-    }
-
     // background sound cross fading
     private void _fadeBackgroundSound(double v) {
         double fo = 0, fi = 0;
@@ -1911,40 +2003,7 @@ public class SiONDriver extends EventDispatcher implements ISiOPMWaveInterface {
         }
     }
 
-    // errors
-    //
-    private RuntimeException errorPluralDrivers() {
-        return new RuntimeException("SiONDriver error; Cannot create pulral SiONDrivers.");
-    }
-
-    private RuntimeException errorParamNotAvailable(String param, double num) {
-        return new RuntimeException("SiONDriver error; Parameter not available. " + param + num);
-    }
-
-    private RuntimeException errorDataIncorrect() {
-        return new RuntimeException("SiONDriver error; data incorrect in play() or render().");
-    }
-
-    private RuntimeException errorDriverBusy(int execID) {
-        String[] states = new String[] {"???", "compiling", "streaming", "rendering"};
-        return new RuntimeException("SiONDriver error: Driver busy. Call " + states[execID] + " while " + states[_listenEvent] + ".");
-    }
-
-    private RuntimeException errorCannotChangeBPM() {
-        return new RuntimeException("SiONDriver error: Cannot change bpm while rendering (SiONTrackEvent.NOTE_*_STREAM).");
-    }
-
-    private RuntimeException errorNotGoodFMVoice() {
-        return new RuntimeException("SiONDriver error; Cannot register the voice.");
-    }
-
-    private RuntimeException errorCannotListenLoading() {
-        return new RuntimeException("SiONDriver error; the class not available for listenSoundLoadingStatus");
-    }
-
-    private RuntimeException errorSoundLoadingFailure() {
-        return new RuntimeException("SiONDriver error; fail to load the sound file");
-    }
+    private static final String[] states = new String[] {"???", "compiling", "streaming", "rendering"};
 }
 
 class SiONDriverJob {

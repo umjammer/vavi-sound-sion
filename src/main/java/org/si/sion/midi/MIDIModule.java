@@ -32,11 +32,11 @@ public class MIDIModule {
     //
 
     /** General MIDI mode */
-    public final String GM_MODE = "GMmode";
+    public static final String GM_MODE = "GMmode";
     /** Roland GS system exclusive mode */
-    public final String GS_MODE = "GSmode";
+    public static final String GS_MODE = "GSmode";
     /** YAMAHA XG system exclusive mode */
-    public final String XG_MODE = "XGmode";
+    public static final String XG_MODE = "XGmode";
 
     // variables
     //
@@ -152,6 +152,7 @@ public class MIDIModule {
      *
      * @param polyphony        polyphony
      * @param midiChannelCount MIDI channel count
+     * @param systemExclusiveMode
      */
     public MIDIModule(int polyphony, int midiChannelCount, String systemExclusiveMode) {
         int slot, i;
@@ -233,9 +234,8 @@ public class MIDIModule {
      */
     public void setDrumSamplerTable(SiOPMWaveSamplerTable table) {
         SiONVoice voice = new SiONVoice();
-        int i;
         voice.setSamplerTable(table);
-        for (i = 0; i < 128; i++) drumVoiceSet[i] = voice;
+        for (int i = 0; i < 128; i++) drumVoiceSet[i] = voice;
     }
 
     /**
@@ -281,9 +281,7 @@ public class MIDIModule {
             voiceSet[i] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi")).get(i);
         }
         for (int i = 0; i < 60; i++) {
-            if (!Boolean.parseBoolean(System.getProperty("org.si.sion.midi.gm", "false"))) {
-                drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi.drum")).get(i);
-            }
+            drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi.drum")).get(i);
         }
     }
 
@@ -295,8 +293,8 @@ public class MIDIModule {
         MIDIModuleOperator ope;
         SiMMLTrack track = null;
         SiOPMChannelBase channel;
-        int drumExcID = 0,
-                sionTrackNote = note;
+        int drumExcID = 0;
+        int sionTrackNote = note;
 
         if (!midiChannel.mute) {
 

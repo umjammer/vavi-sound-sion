@@ -35,7 +35,6 @@ public class MonophonicSynthesizer extends PatternSequencer {
 
     @Override
     public void setNote(int n) {
-        _errorCannotChange("note");
     }
 
     /** Synchronizing quantizing, uint in 16th beat. (0:No synchronization, 1:sync.with 16th, 4:sync.with 4th). @default 0. */
@@ -58,7 +57,6 @@ public class MonophonicSynthesizer extends PatternSequencer {
 
     @Override
     public void setDelay(double d) {
-        _errorCannotChange("delay");
     }
 
     // constructor

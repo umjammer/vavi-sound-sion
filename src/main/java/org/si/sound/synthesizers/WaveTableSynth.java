@@ -84,7 +84,7 @@ public class WaveTableSynth extends BasicSynth {
 
     public void setLayerType(String t) {
         _operatorPitch = _operatorSetting.get(t);
-        if (_operatorPitch == null) throw _errorNoLayerType(t);
+        if (_operatorPitch == null) throw new IllegalArgumentException("no layer type '" + t + "'");
         _layerType = t;
         int i, det, imax = _operatorPitch.length;
         _voice.channelParam.opeCount = imax;
@@ -142,13 +142,5 @@ public class WaveTableSynth extends BasicSynth {
             ch = ((SiOPMChannelFM) _tracks.get(i).channel);
             if (ch != null) ch.setWaveData(_waveTable);
         }
-    }
-
-    // errors
-    //
-
-    // no layer type error
-    private RuntimeException _errorNoLayerType(String type) {
-        return new RuntimeException("WaveTableSynth; no layer type '" + type + "'");
     }
 }

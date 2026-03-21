@@ -52,13 +52,15 @@ class TestCase {
             PropsEntity.Util.bind(this);
         }
 
+        System.setProperty("org.si.sion.maxPolyphony", "128"); // doesn't help
+        System.setProperty("org.si.sion.bufferSize", "512");
         System.setProperty("org.si.sion.allowPluralDrivers", "true");
 Debug.print("volume: " + volume);
     }
 
     @Test
     void test1() throws Exception {
-        int bufSize = Integer.getInteger("sion.bufferSize", 2048);
+        int bufSize = Integer.getInteger("org.si.sion.bufferSize", 2048); // under 512 brakes sounding, spi accepts 256 why?
         SiONDriver driver = new SiONDriver(bufSize, 2, 44100, 0);
         AtomicBoolean smfFinished = new AtomicBoolean(false);
         boolean isSmf;

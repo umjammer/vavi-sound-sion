@@ -18,6 +18,7 @@ import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.Synthesizer;
 
+import org.si.sion.midi.MIDIModule;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -63,6 +64,7 @@ class SionSynthesizerTest {
             PropsEntity.Util.bind(this);
         }
 
+        System.setProperty("org.si.sion.systemExclusiveMode", MIDIModule.GS_MODE);
         System.setProperty("org.si.sion.allowPluralDrivers", "true");
 Debug.println("volume: " + volume);
     }
@@ -88,13 +90,6 @@ Debug.println("sequencer: " + sequencer);
         MetaEventListener mel = meta -> {
 Debug.println("META: " + meta.getType());
             if (meta.getType() == 47) cdl.countDown();
-            // forward tempo changes to SiON driver for correct sub-buffer timing
-            if (meta.getType() == 0x51 && meta.getData().length >= 3) {
-                byte[] d = meta.getData();
-                int usPerQn = ((d[0] & 0xff) << 16) | ((d[1] & 0xff) << 8) | (d[2] & 0xff);
-                double bpm = 60_000_000.0 / usPerQn;
-                ((SionSynthesizer) synthesizer).setBpm(bpm);
-            }
         };
         sequencer.setSequence(seq);
         sequencer.addMetaEventListener(mel);

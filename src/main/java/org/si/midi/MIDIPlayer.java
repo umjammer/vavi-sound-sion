@@ -23,7 +23,7 @@ public class MIDIPlayer {
     // variables
     //
 
-    static private final Map<String, SMFData> _cache = new HashMap<>(); // * = {}
+    static private final Map<String, SMFData> _cache = new HashMap<>();
     static private SiONDriver _driver = null;
     static private SMFData _nextData = null;
     static private boolean _fadeOut = false;

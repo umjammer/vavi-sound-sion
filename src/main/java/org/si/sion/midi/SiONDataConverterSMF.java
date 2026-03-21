@@ -82,14 +82,13 @@ public class SiONDataConverterSMF extends SiONData {
     // operations
     //
     private MMLEvent _onMIDIInitialize(Object data) {
-        int i, imax;
-
         // initialize module
         _module._initialize(useMIDIModuleEffector);
 
         // initialize executors
-        _executors = new SMFExecutor[imax = _smfData.tracks.size()];
-        for (i = 0; i < imax; i++) {
+        int imax = _smfData.tracks.size();
+        _executors = new SMFExecutor[imax];
+        for (int i = 0; i < imax; i++) {
             if (_executors[i] == null) _executors[i] = new SMFExecutor();
             _executors[i]._initialize(_smfData.tracks.get(i), _module);
         }
@@ -103,17 +102,16 @@ public class SiONDataConverterSMF extends SiONData {
     }
 
     private MMLEvent _onMIDIEventCallback(Object data) {
-        int i, imax = _executors.length;
-        int ticks, deltaTime, minDeltaTime;
+        int imax = _executors.length;
         boolean allFinished = true;
 
         double midiTicks = (_waitEvent.length / _resolutionRatio) + _midiTickError;
-        ticks = (int) midiTicks;
+        int ticks = (int) midiTicks;
         _midiTickError = midiTicks - ticks;
 
-        minDeltaTime = Integer.MAX_VALUE;
-        for (i = 0; i < imax; i++) {
-            deltaTime = _executors[i]._execute(ticks);
+        int minDeltaTime = Integer.MAX_VALUE;
+        for (int i = 0; i < imax; i++) {
+            int deltaTime = _executors[i]._execute(ticks);
             if (deltaTime != SMFExecutor.END_OF_TRACK) {
                 allFinished = false;
                 if (minDeltaTime > deltaTime) minDeltaTime = deltaTime;
