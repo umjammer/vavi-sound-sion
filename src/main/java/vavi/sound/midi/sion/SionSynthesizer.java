@@ -102,11 +102,17 @@ logger.log(Level.DEBUG, "BPM set to " + bpm);
         }
     }
 
-    /** Queued MIDI event actions to be processed on the audio thread. */
-    private final Queue<Runnable> midiEvents = new ConcurrentLinkedQueue<>();
+    /** Timestamped MIDI event for sub-buffer positioning */
+    private record TimestampedEvent(long microseconds, Runnable action) {}
+
+    /** Queued MIDI event actions with timestamps for sub-buffer positioning. */
+    private final Queue<TimestampedEvent> midiEvents = new ConcurrentLinkedQueue<>();
 
     /** GLOBAL_WAIT event whose length is set by the callback */
     private MMLEvent spiWaitEvent;
+
+    /** Fractional MML tick accumulator for sub-buffer timing rounding */
+    private double spiMmlTickError = 0;
 
     // ----
 
@@ -180,18 +186,45 @@ logger.log(Level.DEBUG, line.getClass().getName());
     }
 
     /**
-     * Global sequence callback: processes ALL pending MIDI events immediately,
-     * then waits for the remainder of the buffer.
+     * Global sequence callback: processes MIDI events with sub-buffer timing.
+     * <p>
+     * Events are timestamped (from the Java Sequencer's dispatch time) and
+     * spaced within the buffer using GLOBAL_WAIT. This gives short notes
+     * actual audio duration instead of collapsing to zero when note-on and
+     * note-off fall in the same buffer.
      */
     private MMLEvent onSpiCallback(Object data) {
-        // process all pending events immediately
-        Runnable evt;
-        while ((evt = midiEvents.poll()) != null) {
-            evt.run();
+        TimestampedEvent evt = midiEvents.peek();
+        if (evt == null) {
+            // no events — keep polling with minimal wait
+            spiWaitEvent.length = 1;
+            return null;
         }
 
-        // wait for the remainder of the buffer (1 tick minimum)
-        spiWaitEvent.length = 1;
+        // process all events at the same timestamp
+        long currentTimestamp = evt.microseconds;
+        while (evt != null && evt.microseconds <= currentTimestamp) {
+            midiEvents.poll();
+            evt.action.run();
+            evt = midiEvents.peek();
+        }
+
+        // calculate wait to next event using timestamp delta
+        if (evt != null) {
+            long deltaMicros = evt.microseconds - currentTimestamp;
+            // convert microseconds to MML ticks:
+            // SiON resolution = 1920 ticks/whole-note, 240 = 60s * 4 beats/whole-note
+            double mmlTicks = deltaMicros * 1920.0 * driver.getBpm() / 240_000_000.0 + spiMmlTickError;
+            int intTicks = (int) mmlTicks;
+            if (intTicks < 1 && deltaMicros > 0) intTicks = 1;
+            spiWaitEvent.length = Math.max(1, intTicks);
+            spiMmlTickError = mmlTicks - spiWaitEvent.length;
+        } else {
+            // no more events — minimal wait, keep polling
+            spiWaitEvent.length = 1;
+            spiMmlTickError = 0;
+        }
+
         return null;
     }
 
@@ -417,7 +450,10 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
         public void send(MidiMessage message, long timeStamp) {
             if (!isOpen) throw new IllegalStateException("Receiver is not open");
 
-            midiEvents.add(() -> {
+            // use Sequencer's timestamp if available, otherwise capture wall clock
+            long eventMicros = timeStamp >= 0 ? timeStamp : System.nanoTime() / 1000;
+
+            midiEvents.add(new TimestampedEvent(eventMicros, () -> {
                 switch (message) {
                     case ShortMessage shortMessage -> {
                         int channel = shortMessage.getChannel();
@@ -486,7 +522,7 @@ logger.log(Level.DEBUG, "forwarding sysex to MIDIModule (%d bytes)".formatted(by
                     }
                     default -> {}
                 }
-            });
+            }));
         }
 
         @Override
