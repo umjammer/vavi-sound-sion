@@ -11,10 +11,10 @@ import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiDevice;
@@ -102,11 +102,27 @@ logger.log(Level.DEBUG, "BPM set to " + bpm);
         }
     }
 
-    /** Timestamped MIDI event for sub-buffer positioning */
-    private record TimestampedEvent(long microseconds, Runnable action) {}
+    /** Minimum note duration in microseconds to prevent zero-length notes */
+    private static final long MIN_NOTE_DURATION_MICROS = 5000; // 5ms
 
-    /** Queued MIDI event actions with timestamps for sub-buffer positioning. */
-    private final Queue<TimestampedEvent> midiEvents = new ConcurrentLinkedQueue<>();
+    /** Timestamped MIDI event for sub-buffer positioning */
+    private record TimestampedEvent(long microseconds, long sequence, Runnable action)
+            implements Comparable<TimestampedEvent> {
+        @Override
+        public int compareTo(TimestampedEvent other) {
+            int cmp = Long.compare(microseconds, other.microseconds);
+            return cmp != 0 ? cmp : Long.compare(sequence, other.sequence);
+        }
+    }
+
+    /** Monotonic sequence counter for preserving event order within same timestamp */
+    private final AtomicLong eventSequence = new AtomicLong();
+
+    /** Queued MIDI events ordered by timestamp for sub-buffer positioning. */
+    private final PriorityBlockingQueue<TimestampedEvent> midiEvents = new PriorityBlockingQueue<>();
+
+    /** Tracks noteOn timestamps per channel/note for minimum duration enforcement */
+    private final long[][] noteOnTimestamps = new long[16][128];
 
     /** GLOBAL_WAIT event whose length is set by the callback */
     private MMLEvent spiWaitEvent;
@@ -453,7 +469,23 @@ logger.log(Level.INFO, "audioLoop STARTED, bufferLength=" + bufferLength + ", ou
             // use Sequencer's timestamp if available, otherwise capture wall clock
             long eventMicros = timeStamp >= 0 ? timeStamp : System.nanoTime() / 1000;
 
-            midiEvents.add(new TimestampedEvent(eventMicros, () -> {
+            // enforce minimum note duration: push noteOff forward if too close to noteOn
+            if (message instanceof ShortMessage sm) {
+                int cmd = sm.getCommand();
+                int ch = sm.getChannel();
+                int note = sm.getData1();
+                int vel = sm.getData2();
+                if (cmd == ShortMessage.NOTE_ON && vel > 0) {
+                    noteOnTimestamps[ch][note] = eventMicros;
+                } else if (cmd == ShortMessage.NOTE_OFF || (cmd == ShortMessage.NOTE_ON && vel == 0)) {
+                    long onTime = noteOnTimestamps[ch][note];
+                    if (onTime > 0 && eventMicros - onTime < MIN_NOTE_DURATION_MICROS) {
+                        eventMicros = onTime + MIN_NOTE_DURATION_MICROS;
+                    }
+                }
+            }
+
+            midiEvents.add(new TimestampedEvent(eventMicros, eventSequence.getAndIncrement(), () -> {
                 switch (message) {
                     case ShortMessage shortMessage -> {
                         int channel = shortMessage.getChannel();
