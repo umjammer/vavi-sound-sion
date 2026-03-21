@@ -6,14 +6,12 @@
 
 package vavi.sound.midi.sion;
 
-import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -40,11 +38,13 @@ import javax.sound.sampled.SourceDataLine;
 
 import org.si.sion.SiONDriver;
 import org.si.sion.midi.MIDIModule;
+import org.si.utils.ByteArray;
 import vavi.sound.midi.sion.SionSoundbank.SionInstrument;
 import vavi.util.StringUtil;
 
 import static java.lang.System.getLogger;
 import static vavi.sound.SoundUtil.volume;
+import static vavi.sound.midi.sion.SionMidiDeviceProvider.version;
 
 
 /**
@@ -61,24 +61,6 @@ import static vavi.sound.SoundUtil.volume;
 public class SionSynthesizer implements Synthesizer {
 
     private static final Logger logger = getLogger(SionSynthesizer.class.getName());
-
-    static {
-        try {
-            try (InputStream is = SionSynthesizer.class.getResourceAsStream("/META-INF/maven/vavi/vavi-sound-sion/pom.properties")) {
-                if (is != null) {
-                    Properties props = new Properties();
-                    props.load(is);
-                    version = props.getProperty("version", "undefined in pom.properties");
-                } else {
-                    version = System.getProperty("vavi.test.version", "undefined");
-                }
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static final String version;
 
     /** the device information */
     protected static final Info info =
@@ -121,7 +103,7 @@ logger.log(Level.WARNING, "already open: " + hashCode());
             return;
         }
 
-        driver = new SiONDriver(128, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
+        driver = new SiONDriver(256, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
 
         // initialize the processing pipeline (module, sequencer, effector)
         driver.play(null, true);
@@ -419,8 +401,12 @@ logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(time
                             }
                             case ShortMessage.PROGRAM_CHANGE ->
                                 midiModule.programChange(channel, data1);
-                            case ShortMessage.CONTROL_CHANGE ->
+                            case ShortMessage.CONTROL_CHANGE -> {
+                                if (data1 == 64) { // CC#64 sustain pedal
+                                    logger.log(Level.TRACE, "[%d] SUSTAIN ch: %d %s".formatted(timeStamp, channel, data2 >= 64 ? "ON" : "OFF"));
+                                }
                                 midiModule.controlChange(channel, data1, data2);
+                            }
                             case ShortMessage.PITCH_BEND -> {
                                 // combine data1 (LSB) and data2 (MSB) into 14-bit value, centered at 8192
                                 int bend = (data2 << 7) | data1;
