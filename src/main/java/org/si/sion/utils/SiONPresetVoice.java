@@ -659,6 +659,11 @@ class WTV extends Initializer {
     }
 
     // 128 voices from GM
+    //
+    // Sustaining GM families (organ, bowed strings, ensemble, brass, reed, pipe, lead, pad) use sr=0, sl=0
+    // so a held key holds its level: sl>0 decays the note away while it is still on, and a nonzero sr keeps
+    // decaying it through the sustain phase. Percussive families (piano, chromatic, guitar, bass, pizzicato,
+    // harp, timpani, orchestra hit, fx, ethnic, percussive) keep their decay envelopes.
     @Override
     void init() {
         _category("svmidi");
@@ -680,14 +685,14 @@ class WTV extends Initializer {
         _WTV("svmidi.chrom7", "SV.TubulBel", 28, 63, 36, 12, 16, 1, 4, 0);
         _WTV("svmidi.chrom8", "SV.Dulcimer", 16, 63, 44, 12, 24, 4, 4, 1);
 
-        _WTV("svmidi.organ1", "SV.DrawOrgn", 11, 63, 32, 0, 40, 2, 4, 1);
-        _WTV("svmidi.organ2", "SV.PercOrgn", 12, 63, 32, 0, 40, 2, 0, 1);
-        _WTV("svmidi.organ3", "SV.RockOrgn", 4, 63, 32, 0, 40, 2, 4, 1);
-        _WTV("svmidi.organ4", "SV.ChrchOrg", 11, 40, 32, 0, 24, 2, 4, 1);
-        _WTV("svmidi.organ5", "SV.ReedOrgn", 25, 63, 0, 0, 40, 15, 4, 1);
-        _WTV("svmidi.organ6", "SV.Acordion", 17, 30, 32, 0, 40, 4, 4, 1);
-        _WTV("svmidi.organ7", "SV.Harmnica", 20, 30, 32, 0, 32, 4, 4, 1);
-        _WTV("svmidi.organ8", "SV.TangoAcd", 17, 36, 32, 0, 40, 2, 4, 1);
+        _WTV("svmidi.organ1", "SV.DrawOrgn", 11, 63, 32, 0, 40, 0, 4, 1);
+        _WTV("svmidi.organ2", "SV.PercOrgn", 12, 63, 32, 0, 40, 0, 0, 1);
+        _WTV("svmidi.organ3", "SV.RockOrgn", 4, 63, 32, 0, 40, 0, 4, 1);
+        _WTV("svmidi.organ4", "SV.ChrchOrg", 11, 40, 32, 0, 24, 0, 4, 1);
+        _WTV("svmidi.organ5", "SV.ReedOrgn", 25, 63, 0, 0, 40, 0, 4, 1);
+        _WTV("svmidi.organ6", "SV.Acordion", 17, 30, 32, 0, 40, 0, 4, 1);
+        _WTV("svmidi.organ7", "SV.Harmnica", 20, 30, 32, 0, 32, 0, 4, 1);
+        _WTV("svmidi.organ8", "SV.TangoAcd", 17, 36, 32, 0, 40, 0, 4, 1);
 
         _WTV("svmidi.guitar1", "SV.NylonGtr", 11, 63, 44, 16, 32, 3, -3, 1);
         _WTV("svmidi.guitar2", "SV.SteelGtr", 16, 63, 44, 16, 32, 3, -2, 1);
@@ -707,68 +712,68 @@ class WTV extends Initializer {
         _WTV("svmidi.bass7", "SV.SynBass1", 2, 40, 40, 8, 32, 2, -1, 1);
         _WTV("svmidi.bass8", "SV.SynBass2", 10, 48, 40, 8, 32, 2, 0, 1);
 
-        _WTV("svmidi.strings1", "SV.Violin", 19, 24, 4, 4, 32, 15, 6, 1);
-        _WTV("svmidi.strings2", "SV.Viola", 3, 24, 4, 8, 32, 15, 6, 1);
-        _WTV("svmidi.strings3", "SV.Cello", 17, 28, 4, 8, 32, 15, 6, 1);
-        _WTV("svmidi.strings4", "SV.ContraBs", 17, 24, 4, 8, 32, 15, 6, 1);
-        _WTV("svmidi.strings5", "SV.Trem.Str", 10, 24, 4, 8, 32, 15, 6, 1);
+        _WTV("svmidi.strings1", "SV.Violin", 19, 24, 4, 0, 32, 0, 6, 1);
+        _WTV("svmidi.strings2", "SV.Viola", 3, 24, 4, 0, 32, 0, 6, 1);
+        _WTV("svmidi.strings3", "SV.Cello", 17, 28, 4, 0, 32, 0, 6, 1);
+        _WTV("svmidi.strings4", "SV.ContraBs", 17, 24, 4, 0, 32, 0, 6, 1);
+        _WTV("svmidi.strings5", "SV.Trem.Str", 10, 24, 4, 0, 32, 0, 6, 1);
         _WTV("svmidi.strings6", "SV.Pizz.Str", 2, 40, 36, 24, 32, 6, 4, 1);
         _WTV("svmidi.strings7", "SV.Harp", 8, 40, 36, 24, 24, 6, 4, 1);
         _WTV("svmidi.strings8", "SV.Timpani", 8, 40, 36, 24, 24, 6, 4, 0);
 
-        _WTV("svmidi.ensemble1", "SV.Strings1", 2, 36, 1, 1, 32, 15, 7, 1);
-        _WTV("svmidi.ensemble2", "SV.Strings2", 23, 24, 1, 1, 32, 15, 6, 1);
-        _WTV("svmidi.ensemble3", "SV.Syn.Str1", 2, 36, 1, 1, 32, 15, 7, 1);
-        _WTV("svmidi.ensemble4", "SV.Syn.Str2", 23, 24, 1, 1, 32, 15, 6, 1);
-        _WTV("svmidi.ensemble5", "SV.ChoirAah", 21, 36, 3, 3, 32, 15, 6, 1);
-        _WTV("svmidi.ensemble6", "SV.VoiceOoh", 11, 24, 3, 3, 32, 15, 6, 1);
-        _WTV("svmidi.ensemble7", "SV.SynVoice", 12, 24, 3, 3, 32, 15, 6, 1);
+        _WTV("svmidi.ensemble1", "SV.Strings1", 2, 36, 1, 0, 32, 0, 7, 1);
+        _WTV("svmidi.ensemble2", "SV.Strings2", 23, 24, 1, 0, 32, 0, 6, 1);
+        _WTV("svmidi.ensemble3", "SV.Syn.Str1", 2, 36, 1, 0, 32, 0, 7, 1);
+        _WTV("svmidi.ensemble4", "SV.Syn.Str2", 23, 24, 1, 0, 32, 0, 6, 1);
+        _WTV("svmidi.ensemble5", "SV.ChoirAah", 21, 36, 3, 0, 32, 0, 6, 1);
+        _WTV("svmidi.ensemble6", "SV.VoiceOoh", 11, 24, 3, 0, 32, 0, 6, 1);
+        _WTV("svmidi.ensemble7", "SV.SynVoice", 12, 24, 3, 0, 32, 0, 6, 1);
         _WTV("svmidi.ensemble8", "SV.Orch.Hit", 26, 40, 32, 24, 32, 8, 2, -3);
 
-        _WTV("svmidi.brass1", "SV.Trumpet", 10, 38, 32, 8, 32, 3, 0, 1);
-        _WTV("svmidi.brass2", "SV.Trombone", 10, 30, 44, 8, 32, 1, 3, 1);
-        _WTV("svmidi.brass3", "SV.Tuba", 15, 30, 32, 8, 32, 1, 4, 1);
-        _WTV("svmidi.brass4", "SV.Mute.Trp", 18, 32, 44, 8, 32, 1, 4, 1);
-        _WTV("svmidi.brass5", "SV.Fr.Horn", 11, 32, 44, 8, 32, 1, 4, 1);
-        _WTV("svmidi.brass6", "SV.BrasSect", 19, 32, 44, 8, 32, 1, 4, 1);
-        _WTV("svmidi.brass7", "SV.SynBras1", 2, 36, 28, 8, 32, 2, 2, 1);
-        _WTV("svmidi.brass8", "SV.SynBras2", 13, 28, 32, 8, 32, 2, 2, 1);
+        _WTV("svmidi.brass1", "SV.Trumpet", 10, 38, 32, 0, 32, 0, 0, 1);
+        _WTV("svmidi.brass2", "SV.Trombone", 10, 30, 44, 0, 32, 0, 3, 1);
+        _WTV("svmidi.brass3", "SV.Tuba", 15, 30, 32, 0, 32, 0, 4, 1);
+        _WTV("svmidi.brass4", "SV.Mute.Trp", 18, 32, 44, 0, 32, 0, 4, 1);
+        _WTV("svmidi.brass5", "SV.Fr.Horn", 11, 32, 44, 0, 32, 0, 4, 1);
+        _WTV("svmidi.brass6", "SV.BrasSect", 19, 32, 44, 0, 32, 0, 4, 1);
+        _WTV("svmidi.brass7", "SV.SynBras1", 2, 36, 28, 0, 32, 0, 2, 1);
+        _WTV("svmidi.brass8", "SV.SynBras2", 13, 28, 32, 0, 32, 0, 2, 1);
 
-        _WTV("svmidi.reed1", "SV.SprnoSax", 6, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed2", "SV.Alto Sax", 5, 32, 44, 8, 32, 1, -2, 1);
-        _WTV("svmidi.reed3", "SV.TenorSax", 10, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed4", "SV.Bari.Sax", 10, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed5", "SV.Oboe", 21, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed6", "SV.Eng.Horn", 3, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed7", "SV.Bassoon", 3, 32, 44, 8, 32, 1, 2, 1);
-        _WTV("svmidi.reed8", "SV.Clarinet", 12, 32, 44, 8, 32, 1, 2, 1);
+        _WTV("svmidi.reed1", "SV.SprnoSax", 6, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed2", "SV.Alto Sax", 5, 32, 44, 0, 32, 0, -2, 1);
+        _WTV("svmidi.reed3", "SV.TenorSax", 10, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed4", "SV.Bari.Sax", 10, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed5", "SV.Oboe", 21, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed6", "SV.Eng.Horn", 3, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed7", "SV.Bassoon", 3, 32, 44, 0, 32, 0, 2, 1);
+        _WTV("svmidi.reed8", "SV.Clarinet", 12, 32, 44, 0, 32, 0, 2, 1);
 
-        _WTV("svmidi.pipe1", "SV.Piccolo", 9, 32, 44, 8, 32, 2, 0, 1);
-        _WTV("svmidi.pipe2", "SV.Flute", 3, 28, 36, 8, 32, 3, -2, 1);
-        _WTV("svmidi.pipe3", "SV.Recorder", 8, 32, 44, 8, 32, 2, 0, 1);
-        _WTV("svmidi.pipe4", "SV.PanFlute", 12, 32, 44, 8, 32, 2, 0, 2);
-        _WTV("svmidi.pipe5", "SV.Bottle", 21, 28, 36, 8, 32, 3, 0, 0);
-        _WTV("svmidi.pipe6", "SV.Shakhchi", 18, 28, 36, 8, 32, 3, 0, 0);
-        _WTV("svmidi.pipe7", "SV.Whistle", 3, 28, 36, 8, 32, 4, 0, 2);
-        _WTV("svmidi.pipe8", "SV.Ocarina", 1, 32, 36, 8, 32, 4, 0, 2);
+        _WTV("svmidi.pipe1", "SV.Piccolo", 9, 32, 44, 0, 32, 0, 0, 1);
+        _WTV("svmidi.pipe2", "SV.Flute", 3, 28, 36, 0, 32, 0, -2, 1);
+        _WTV("svmidi.pipe3", "SV.Recorder", 8, 32, 44, 0, 32, 0, 0, 1);
+        _WTV("svmidi.pipe4", "SV.PanFlute", 12, 32, 44, 0, 32, 0, 0, 2);
+        _WTV("svmidi.pipe5", "SV.Bottle", 21, 28, 36, 0, 32, 0, 0, 0);
+        _WTV("svmidi.pipe6", "SV.Shakhchi", 18, 28, 36, 0, 32, 0, 0, 0);
+        _WTV("svmidi.pipe7", "SV.Whistle", 3, 28, 36, 0, 32, 0, 0, 2);
+        _WTV("svmidi.pipe8", "SV.Ocarina", 1, 32, 36, 0, 32, 0, 0, 2);
 
-        _WTV("svmidi.lead1", "SV.SquareLd", 14, 63, 0, 0, 32, 15, 7, 1);
-        _WTV("svmidi.lead2", "SV.Saw.Lead", 6, 63, 0, 0, 32, 15, 6, 1);
-        _WTV("svmidi.lead3", "SV.CaliopLd", 11, 63, 32, 0, 32, 3, 0, 1);
-        _WTV("svmidi.lead4", "SV.ChiffLd", 18, 63, 32, 0, 32, 3, 0, 1);
-        _WTV("svmidi.lead5", "SV.CharanLd", 17, 63, 32, 0, 32, 3, 1, 1);
-        _WTV("svmidi.lead6", "SV.Voice Ld", 19, 63, 32, 0, 32, 3, 4, 1);
-        _WTV("svmidi.lead7", "SV.Fifth Ld", 18, 63, 0, 0, 32, 15, 8, 0);
-        _WTV("svmidi.lead8", "SV.Bass &Ld", 17, 63, 0, 0, 32, 15, 7, 0);
+        _WTV("svmidi.lead1", "SV.SquareLd", 14, 63, 0, 0, 32, 0, 7, 1);
+        _WTV("svmidi.lead2", "SV.Saw.Lead", 6, 63, 0, 0, 32, 0, 6, 1);
+        _WTV("svmidi.lead3", "SV.CaliopLd", 11, 63, 32, 0, 32, 0, 0, 1);
+        _WTV("svmidi.lead4", "SV.ChiffLd", 18, 63, 32, 0, 32, 0, 0, 1);
+        _WTV("svmidi.lead5", "SV.CharanLd", 17, 63, 32, 0, 32, 0, 1, 1);
+        _WTV("svmidi.lead6", "SV.Voice Ld", 19, 63, 32, 0, 32, 0, 4, 1);
+        _WTV("svmidi.lead7", "SV.Fifth Ld", 18, 63, 0, 0, 32, 0, 8, 0);
+        _WTV("svmidi.lead8", "SV.Bass &Ld", 17, 63, 0, 0, 32, 0, 7, 0);
 
-        _WTV("svmidi.pad1", "SV.NewAgePd", 27, 40, 12, 0, 28, 6, 4, 1);
-        _WTV("svmidi.pad2", "SV.Warm Pad", 23, 24, 12, 0, 24, 6, 4, 1);
-        _WTV("svmidi.pad3", "SV.PolySyPd", 2, 28, 12, 0, 28, 6, 4, 1);
-        _WTV("svmidi.pad4", "SV.ChoirPad", 11, 24, 12, 0, 28, 6, 4, 1);
-        _WTV("svmidi.pad5", "SV.BowedPad", 1, 16, 12, 0, 24, 6, 4, 1);
-        _WTV("svmidi.pad6", "SV.MetalPad", 20, 24, 12, 0, 24, 6, 4, 1);
-        _WTV("svmidi.pad7", "SV.Halo Pad", 21, 24, 12, 0, 28, 6, 4, 1);
-        _WTV("svmidi.pad8", "SV.SweepPad", 17, 16, 12, 0, 24, 6, 4, 1);
+        _WTV("svmidi.pad1", "SV.NewAgePd", 27, 40, 12, 0, 28, 0, 4, 1);
+        _WTV("svmidi.pad2", "SV.Warm Pad", 23, 24, 12, 0, 24, 0, 4, 1);
+        _WTV("svmidi.pad3", "SV.PolySyPd", 2, 28, 12, 0, 28, 0, 4, 1);
+        _WTV("svmidi.pad4", "SV.ChoirPad", 11, 24, 12, 0, 28, 0, 4, 1);
+        _WTV("svmidi.pad5", "SV.BowedPad", 1, 16, 12, 0, 24, 0, 4, 1);
+        _WTV("svmidi.pad6", "SV.MetalPad", 20, 24, 12, 0, 24, 0, 4, 1);
+        _WTV("svmidi.pad7", "SV.Halo Pad", 21, 24, 12, 0, 28, 0, 4, 1);
+        _WTV("svmidi.pad8", "SV.SweepPad", 17, 16, 12, 0, 24, 0, 4, 1);
 
         _WTV("svmidi.fx1", "SV.Rain", 3, 28, 12, 0, 24, 6, 4, 1);
         _WTV("svmidi.fx2", "SV.SoundTrk", 18, 24, 12, 0, 24, 6, 4, 1);
