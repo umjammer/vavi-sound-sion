@@ -40,6 +40,7 @@ import org.si.sion.midi.MIDIModule;
 import org.si.sion.sequencer.base.MMLEvent;
 import org.si.sion.sequencer.base.MMLSequence;
 import org.si.utils.ByteArray;
+import vavi.sound.mfi.vavi.sequencer.MfiValueExclusive;
 import vavi.sound.midi.sion.SionSoundbank.SionInstrument;
 import vavi.util.StringUtil;
 
@@ -98,6 +99,23 @@ public class SionSynthesizer implements Synthesizer {
 
     /** the notes of a channel which started a stream, touched by the audio thread only */
     private final int[][] streamNotes = new int[16][128];
+
+    /** the listener's volume, universal master volume, 0 ~ 1. touched by the audio thread only */
+    private double hostGain = 1;
+
+    /** the song's volume, mfi master volume, 0 ~ 1. touched by the audio thread only */
+    private double songGain = 1;
+
+    /**
+     * the mfi master volume the universal master volume following is the song's one of,
+     * -1: none. touched by the audio thread only
+     */
+    private int songVolume = -1;
+
+    /** the listener's volume scaled by the song's, see {@code vavi.sound.midi.faith.FaithSynthesizer} */
+    private void applyGain() {
+        driver.setVolume(hostGain * songGain);
+    }
 
     /**
      * Set the BPM for the internal SiON sequencer.
@@ -608,13 +626,26 @@ logger.log(Level.DEBUG, "unhandled command: %02X ch: %d, d1: %d, d2: %d".formatt
                     case SysexMessage sysex -> {
                         byte[] data = sysex.getData();
 logger.log(Level.TRACE, "sysex: %02X\n%s".formatted(sysex.getStatus(), StringUtil.getDump(data, 32)));
-                        if ((data[0] & 0xff) == 0x7f && data.length >= 6 && data[2] == 0x04 && data[3] == 0x01) {
-                            // Universal Realtime, Device Control / Master Volume
-                            double gain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383d;
-logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
-                            driver.setVolume(gain);
-                        }
-                        if (yamaha != null) {
+                        int sub = MfiValueExclusive.sub(sysex.getMessage());
+                        if (sub == MfiValueExclusive.MASTER_VOLUME && data.length >= 4) {
+                            // vavi's mark: the universal master volume following is the song's (mfi 0xb0)
+                            songVolume = data[3] & 0x7f;
+                            songGain = songVolume / 127d;
+logger.log(Level.DEBUG, "song volume: %d".formatted(songVolume));
+                            applyGain();
+                        } else if ((data[0] & 0xff) == 0x7f && data.length >= 6 && data[2] == 0x04 && data[3] == 0x01) {
+                            // Universal Realtime, Device Control / Master Volume, the listener's
+                            // unless it is the song's the mark above has taken already
+                            if (songVolume >= 0 && data[4] == 0 && data[5] == songVolume) {
+                                songVolume = -1;
+                            } else {
+                                hostGain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383d;
+logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(hostGain * 127));
+                                applyGain();
+                            }
+                        } else if (sub >= 0) {
+                            // the other mfi values, nothing SiON takes
+                        } else if (yamaha != null) {
                             yamaha.run();
                         } else {
                             // forward all SysEx to MIDIModule for GM/GS/XG Reset and drum mode handling
