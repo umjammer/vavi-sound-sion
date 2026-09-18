@@ -28,6 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vavi.sound.midi.MidiUtil.volume;
 
 
@@ -58,6 +59,9 @@ class SionSynthesizerTest {
     @Property
     String midi = "src/test/resources/test.mid";
 
+    @Property
+    String mld = "src/test/resources/test.mid";
+
     @BeforeEach
     void setup() throws Exception {
         if (localPropertiesExists()) {
@@ -75,6 +79,7 @@ Debug.println("volume: " + volume);
         Synthesizer synthesizer = new SionSynthesizer();
         synthesizer.open();
 Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
 
         Sequencer sequencer = MidiSystem.getSequencer(false);
         Receiver receiver = synthesizer.getReceiver();
@@ -119,6 +124,7 @@ Debug.println(midi);
         assertEquals(SionSynthesizer.class, synthesizer.getClass());
         synthesizer.open();
 Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
 
         Sequencer sequencer = MidiSystem.getSequencer(false);
         Receiver receiver = synthesizer.getReceiver();
@@ -134,13 +140,7 @@ Debug.println("sequencer: " + sequencer + ", " + sequencer.getClass().getName())
         MetaEventListener mel = meta -> {
 Debug.println("META: " + meta.getType());
             if (meta.getType() == 47) cdl.countDown();
-            // forward tempo changes to SiON driver for correct sub-buffer timing
-            if (meta.getType() == 0x51 && meta.getData().length >= 3) {
-                byte[] d = meta.getData();
-                int usPerQn = ((d[0] & 0xff) << 16) | ((d[1] & 0xff) << 8) | (d[2] & 0xff);
-                double bpm = 60_000_000.0 / usPerQn;
-                ((SionSynthesizer) synthesizer).setBpm(bpm);
-            }
+            // no need to forward tempo changes to the synthesizer, see SionSynthesizer#setBpm
         };
         sequencer.setSequence(seq);
         sequencer.addMetaEventListener(mel);
@@ -153,6 +153,53 @@ if (!onIde) {
  Thread.sleep(time);
  sequencer.stop();
 Debug.println("STOP");
+} else {
+        cdl.await();
+}
+Debug.println("END");
+        sequencer.removeMetaEventListener(mel);
+        sequencer.close();
+
+        synthesizer.close();
+    }
+
+    @Test
+    @DisplayName("mld")
+    void test1() throws Exception {
+Debug.println(mld);
+
+        Synthesizer synthesizer = MidiSystem.getSynthesizer();
+        assertEquals(SionSynthesizer.class, synthesizer.getClass());
+        synthesizer.open();
+Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
+
+        Sequencer sequencer = MidiSystem.getSequencer(false);
+        Receiver receiver = synthesizer.getReceiver();
+        sequencer.getTransmitter().setReceiver(receiver);
+        sequencer.open();
+Debug.println("sequencer: " + sequencer + ", " + sequencer.getClass().getName());
+
+        Path file = Paths.get(mld);
+
+        Sequence seq = MidiSystem.getSequence(new BufferedInputStream(Files.newInputStream(file)));
+
+        CountDownLatch cdl = new CountDownLatch(1);
+        MetaEventListener mel = meta -> {
+Debug.println("META: " + meta.getType());
+            if (meta.getType() == 47) cdl.countDown();
+        };
+        sequencer.setSequence(seq);
+        sequencer.addMetaEventListener(mel);
+Debug.println("START");
+        sequencer.start();
+
+        volume(receiver, volume);
+
+if (!onIde) {
+ Thread.sleep(time);
+ sequencer.stop();
+ Debug.println("STOP");
 } else {
         cdl.await();
 }

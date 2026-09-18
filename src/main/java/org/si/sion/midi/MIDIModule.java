@@ -285,6 +285,28 @@ public class MIDIModule {
         }
     }
 
+    /**
+     * set the voice of a program while playing.
+     * <p>
+     * [vavi] not in the original. an operator keeps the voice of the program it played last
+     * and does not look at voiceSet[] again until the program changes, so a voice put into
+     * voiceSet[] directly never reaches an operator which played that program already. this
+     * makes such operators load the voice again at their next note on.
+     * </p>
+     *
+     * @param programNumber program number [0-127]
+     * @param voice voice to set
+     */
+    public void setVoice(int programNumber, SiONVoice voice) {
+        voiceSet[programNumber & 127] = voice;
+        for (MIDIModuleOperator ope = _freeOperators.next; ope != _freeOperators; ope = ope.next) {
+            if (ope.programNumber == programNumber) ope.programNumber = -1;
+        }
+        for (MIDIModuleOperator ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
+            if (ope.programNumber == programNumber) ope.programNumber = -1;
+        }
+    }
+
     /** note on */
     public void noteOn(int channelNum, int note, int velocity) {
         channelNum += _portOffset;

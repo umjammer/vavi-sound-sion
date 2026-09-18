@@ -44,7 +44,6 @@ import vavi.sound.midi.sion.SionSoundbank.SionInstrument;
 import vavi.util.StringUtil;
 
 import static java.lang.System.getLogger;
-import static vavi.sound.SoundUtil.volume;
 import static vavi.sound.midi.sion.SionMidiDeviceProvider.version;
 
 
@@ -85,16 +84,29 @@ public class SionSynthesizer implements Synthesizer {
 
     private MIDIModule midiModule;
 
+    /** the stream pcm and wave table waves of an MFi or SMAF file */
+    private SionWaves waves;
+
+    /** the voices an MFi or SMAF file sends */
+    private SionYamahaVoices yamahaVoices;
+
+    /** bank select MSB of a channel, touched by the audio thread only */
+    private final int[] bankMSBs = new int[16];
+
+    /** bank select LSB of a channel, touched by the audio thread only */
+    private final int[] bankLSBs = new int[16];
+
+    /** the notes of a channel which started a stream, touched by the audio thread only */
+    private final int[][] streamNotes = new int[16][128];
+
     /**
      * Set the BPM for the internal SiON sequencer.
      * <p>
-     * In the API path, BPM is set from the MIDI file's tempo meta events.
-     * In the SPI path, the Java Sequencer handles tempo internally but
-     * the SiON driver needs to know the BPM for correct sub-buffer
-     * event interleaving via the global sequence callback.
-     * <p>
-     * Call this from a MetaEventListener when receiving tempo meta events
-     * (type 0x51), converting microseconds-per-quarter-note to BPM.
+     * Not needed for this synthesizer to keep time: the Java Sequencer handles tempo, and
+     * {@link #onSpiCallback} turns the time between events into MML ticks with the BPM of
+     * the driver, which then turns them back into samples with that same BPM, so it cancels
+     * out. Changing it only changes the tick the waits are rounded to (1920 a whole note).
+     * </p>
      *
      * @param bpm beats per minute
      */
@@ -156,6 +168,9 @@ logger.log(Level.WARNING, "already open: " + hashCode());
         // initialize MIDI module — allocates polyphony operator pool with tracks
         driver.initializeMidiModule(true);
         midiModule = driver.getMidiModule();
+
+        waves = new SionWaves(driver);
+        yamahaVoices = new SionYamahaVoices(midiModule, waves);
 
         // install global sequence — events must fire inside _process() because
         // keyOn() sets executor.pointer which is consumed by processMMLExecutor()
@@ -283,11 +298,12 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
 
                 // convert double output [-1..1] to 16-bit little-endian PCM
                 double[] output = driver.module.getOutput();
+                double volume = driver.getVolume();
                 double maxAbs = 0;
                 for (int i = 0; i < output.length; i++) {
-                    double v = output[i];
+                    double v = output[i] * volume;
                     if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
-                    short s = (short) (v * 32767);
+                    short s = (short) (Math.clamp(v, -1, 1) * 32767);
                     out[i * 2] = (byte) (s & 0xff);
                     out[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
                 }
@@ -454,6 +470,50 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
         throw new UnsupportedOperationException("not implemented yet");
     }
 
+    /** remembers the bank of a channel, a SMAF drum bank makes it a drum channel. on the audio thread */
+    private void bankSelect(int channel, int control, int value) {
+        if (control == 0) {
+            bankMSBs[channel] = value;
+            if (value == SionYamahaVoices.DRUM_BANK) {
+                midiModule.midiChannels[channel].drumMode = 1;
+            } else if (value == SionYamahaVoices.MELODY_BANK) {
+                midiModule.midiChannels[channel].drumMode = 0;
+            }
+        } else if (control == 32) {
+            bankLSBs[channel] = value;
+        }
+    }
+
+    /**
+     * A note of key 0 ~ 12 or 92 ~ 110 on a SMAF drum channel starts stream {@code key + 1}
+     * or {@code key - 78}, see {@code Note_ON3} of the MA-3 driver (mammfcnv.c). On the audio thread.
+     *
+     * @return false when the note is not a stream one
+     */
+    private boolean streamNoteOn(int channel, int note, int velocity) {
+        if (bankMSBs[channel] != SionYamahaVoices.DRUM_BANK) {
+            return false;
+        }
+        int id = note <= 12 ? note + 1 : note >= 92 && note <= 110 ? note - 78 : 0;
+        if (id == 0 || !waves.hasStream(id)) {
+            return false;
+        }
+        waves.streamOn(id, velocity, -1);
+        streamNotes[channel][note] = id;
+        return true;
+    }
+
+    /** @return false when the note did not start a stream */
+    private boolean streamNoteOff(int channel, int note) {
+        int id = streamNotes[channel][note];
+        if (id == 0) {
+            return false;
+        }
+        streamNotes[channel][note] = 0;
+        waves.streamOff(id);
+        return true;
+    }
+
     private final List<Receiver> receivers = new ArrayList<>();
 
     /** MIDI receiver that dispatches to MIDIModule */
@@ -489,6 +549,9 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
                 }
             }
 
+            // the voices and waves of an MFi or SMAF file are decoded here, not in the audio thread
+            Runnable yamaha = message instanceof SysexMessage sysex ? yamahaVoices.process(sysex.getData()) : null;
+
             midiEvents.add(new TimestampedEvent(eventMicros, eventSequence.getAndIncrement(), () -> {
                 switch (message) {
                     case ShortMessage shortMessage -> {
@@ -501,7 +564,11 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
                             case ShortMessage.NOTE_ON -> {
                                 if (data2 == 0) {
                                     // velocity 0 = note off per MIDI spec
-                                    midiModule.noteOff(channel, data1, 0);
+                                    if (!streamNoteOff(channel, data1)) {
+                                        midiModule.noteOff(channel, data1, 0);
+                                    }
+                                } else if (streamNoteOn(channel, data1, data2)) {
+logger.log(Level.TRACE, "[%d] NOTE_ON ch:%d note:%d vel:%d (stream)".formatted(timeStamp, channel, data1, data2));
                                 } else {
                                     {
                                     var mc = midiModule.midiChannels[channel];
@@ -513,15 +580,19 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
                             }
                             case ShortMessage.NOTE_OFF -> {
 logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(timeStamp, channel, data1, data2));
-                                midiModule.noteOff(channel, data1, data2);
+                                if (!streamNoteOff(channel, data1)) {
+                                    midiModule.noteOff(channel, data1, data2);
+                                }
                             }
                             case ShortMessage.PROGRAM_CHANGE -> {
                                 logger.log(Level.TRACE, "[%d] PROG_CHG ch:%d prg:%d".formatted(timeStamp, channel, data1));
+                                yamahaVoices.programChange(bankMSBs[channel], bankLSBs[channel], data1);
                                 midiModule.programChange(channel, data1);
                             }
                             case ShortMessage.CONTROL_CHANGE -> {
                                 logger.log(Level.TRACE, "[%d] CC ch:%d cc#%d val:%d".formatted(timeStamp, channel, data1, data2));
                                 midiModule.controlChange(channel, data1, data2);
+                                bankSelect(channel, data1, data2);
                             }
                             case ShortMessage.PITCH_BEND -> {
                                 // combine data1 (LSB) and data2 (MSB) into 14-bit value, centered at 8192
@@ -534,27 +605,26 @@ logger.log(Level.TRACE, "[%d] NOTE_OFF ch: %d, note: %d, vel: %d".formatted(time
 logger.log(Level.DEBUG, "unhandled command: %02X ch: %d, d1: %d, d2: %d".formatted(command, channel, data1, data2));
                         }
                     }
-                    case SysexMessage sysexMessage -> {
-                        byte[] data = sysexMessage.getData();
-logger.log(Level.TRACE, "sysex: %02X\n%s".formatted(sysexMessage.getStatus(), StringUtil.getDump(data, 32)));
-                        switch (data[0]) {
-                            case 0x7f -> { // Universal Realtime
-                                int c = data[1]; // 0x7f: Disregards channel
-                                // Sub-ID, Sub-ID2
-                                if (data[2] == 0x04 && data[3] == 0x01) { // Device Control / Master Volume
-                                    float gain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383f;
+                    case SysexMessage sysex -> {
+                        byte[] data = sysex.getData();
+logger.log(Level.TRACE, "sysex: %02X\n%s".formatted(sysex.getStatus(), StringUtil.getDump(data, 32)));
+                        if ((data[0] & 0xff) == 0x7f && data.length >= 6 && data[2] == 0x04 && data[3] == 0x01) {
+                            // Universal Realtime, Device Control / Master Volume
+                            double gain = ((data[4] & 0x7f) | ((data[5] & 0x7f) << 7)) / 16383d;
 logger.log(Level.DEBUG, "sysex volume: gain: %3.0f".formatted(gain * 127));
-                                    volume(line, gain);
-                                }
-                            }
+                            driver.setVolume(gain);
                         }
-                        // forward all SysEx to MIDIModule for GM/GS/XG Reset and drum mode handling
-                        ByteArray bytes = new ByteArray();
-                        bytes.writeByte(0xf0); // prepend status byte stripped by SysexMessage.getData()
-                        for (byte b : data) bytes.writeByte(b & 0xff);
-                        bytes.position = 0;
+                        if (yamaha != null) {
+                            yamaha.run();
+                        } else {
+                            // forward all SysEx to MIDIModule for GM/GS/XG Reset and drum mode handling
+                            ByteArray bytes = new ByteArray();
+                            bytes.writeByte(0xf0); // prepend status byte stripped by SysexMessage.getData()
+                            for (byte b : data) bytes.writeByte(b & 0xff);
+                            bytes.position = 0;
 logger.log(Level.DEBUG, "forwarding sysex to MIDIModule (%d bytes)".formatted(bytes.length));
-                        midiModule.systemExclusive(0, bytes);
+                            midiModule.systemExclusive(0, bytes);
+                        }
                     }
                     default -> {}
                 }
