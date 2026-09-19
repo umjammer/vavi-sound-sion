@@ -65,7 +65,7 @@ Debug.print("volume: " + volume);
         AtomicBoolean smfFinished = new AtomicBoolean(false);
         boolean isSmf;
 
-        if (midi != null) {
+        if (System.getProperty("SystemProperty", "").equals("ide") && midi != null) {
             byte[] bytes = Files.readAllBytes(Paths.get(midi));
             ByteArray byteArray = new ByteArray();
             byteArray.writeBytes(bytes);

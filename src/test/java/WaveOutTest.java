@@ -37,9 +37,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vavi.sound.SoundUtil.volume;
 import static vavix.util.DelayedWorker.later;
 
@@ -51,7 +54,7 @@ import static vavix.util.DelayedWorker.later;
  * @version 0.00 2026-03-19 nsano initial version <br>
  */
 @PropsEntity(url = "file:local.properties")
-@EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
+@EnabledIf("localPropertiesExists")
 class WaveOutTest {
 
     static {
@@ -63,7 +66,7 @@ class WaveOutTest {
         return Files.exists(Paths.get("local.properties"));
     }
 
-    static long time = 120 * 1000;
+    static long time = System.getProperty("vavi.test", "").equals("ide") ? 120 * 1000 :  5 * 1000;
 
     @Property
     String midi = "src/test/resources/test.mid";
@@ -86,6 +89,8 @@ class WaveOutTest {
     @DisplayName("via spi")
     void test() throws Exception {
 Debug.println(midi);
+        Path wav = Path.of("tmp", "sion_api.wav");
+        System.setProperty("vavi.sound.sampled.misc.waveout", wav.toString());
 
         Synthesizer synthesizer = MidiSystem.getSynthesizer();
         assertEquals(SionSynthesizer.class, synthesizer.getClass());
@@ -127,14 +132,18 @@ Debug.println("STOP");
 
         synthesizer.close();
 
-        Files.move(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout")), Path.of("tmp", "sion_spi.wav"), StandardCopyOption.REPLACE_EXISTING);
+        assertTrue(Files.exists(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout"))));
 Debug.println("END");
+        assertDoesNotThrow(() -> Files.delete(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout"))));
     }
 
     @Test
     @DisplayName("via api")
     void test1() throws Exception {
 Debug.println(midi);
+        Path wav = Path.of("tmp", "sion_spi.wav");
+        System.setProperty("vavi.sound.sampled.misc.waveout", wav.toString());
+
         SiONDriver driver = new SiONDriver(2048, 2, 44100, 0);
         AtomicBoolean smfFinished = new AtomicBoolean(false);
 
@@ -186,11 +195,13 @@ Debug.printStackTrace(e);
         executor.shutdown();
 Debug.println("Finished.");
 
-        Files.move(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout")), Path.of("tmp", "sion_api.wav"), StandardCopyOption.REPLACE_EXISTING);
+        assertTrue(Files.exists(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout"))));
+Debug.println("END");
+        assertDoesNotThrow(() -> Files.delete(Path.of(System.getProperty("vavi.sound.sampled.misc.waveout"))));
     }
 
     @AfterAll
     static void tearDownAll() {
-        System.setProperty("javax.sound.sampled.SourceDataLine", "");
+        System.clearProperty("javax.sound.sampled.SourceDataLine");
     }
 }
