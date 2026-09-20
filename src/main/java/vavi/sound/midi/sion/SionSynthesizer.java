@@ -56,6 +56,9 @@ import static vavi.sound.midi.sion.SionMidiDeviceProvider.version;
  * SourceDataLine's blocking write for natural backpressure — no manual
  * sample-counting or busy-wait timing is needed.
  * </p><p>
+ * A host which mixes the song itself opens it with {@link #openRenderer()} instead, and runs
+ * the same pipeline on its own thread by {@link #render}.
+ * </p><p>
  * system property
  *  <li>{@code org.si.sion.bufferSize} ... midi buffer size, default 256</li>
  * </p>
@@ -76,6 +79,9 @@ public class SionSynthesizer implements Synthesizer {
     private long frames;
 
     private volatile boolean isOpen;
+
+    /** whether it is {@link #openRenderer() rendering} when it is asked to, instead of into a line of its own */
+    private boolean rendering;
 
     private final AudioFormat audioFormat = new AudioFormat(44100, 16, 2, true, false);
 
@@ -177,6 +183,29 @@ logger.log(Level.WARNING, "already open: " + hashCode());
             return;
         }
 
+        initDriver();
+
+        initAudioLine();
+        executor.submit(this::audioLoop);
+    }
+
+    /**
+     * Opens it without a line of its own: it makes no sound until {@link #render} is called,
+     * which is where the pipeline is run, on the caller's thread, so a host mixes, records and
+     * pauses the song as it likes. Instead of {@link #open()}, not beside it.
+     */
+    public void openRenderer() {
+        if (isOpen()) {
+logger.log(Level.WARNING, "already open: " + hashCode());
+            return;
+        }
+
+        rendering = true;
+        initDriver();
+    }
+
+    /** the driver, the midi module and the global sequence, what both ways of opening need */
+    private void initDriver() {
         int bufSize = Integer.getInteger("org.si.sion.bufferSize", 256);
         driver = new SiONDriver(bufSize, audioFormat.getChannels(), (int) audioFormat.getSampleRate(), 0);
 
@@ -195,9 +224,65 @@ logger.log(Level.WARNING, "already open: " + hashCode());
         setupGlobalSequence();
 
         isOpen = true;
+    }
 
-        initAudioLine();
-        executor.submit(this::audioLoop);
+    /** the rate {@link #render} renders at */
+    public float getSampleRate() {
+        return audioFormat.getSampleRate();
+    }
+
+    /** the chunk {@link #processChunk} last made, interleaved L/R, {@code -1 ~ 1} */
+    private double[] chunk;
+
+    /** the frame of {@link #chunk} {@link #render} is at, its length when it is spent */
+    private int chunkPos;
+
+    /**
+     * Renders, for a host which asks for the samples rather than letting it play to a line, see
+     * {@link #openRenderer()}. The pipeline runs a buffer at a time, so what is left of a buffer
+     * is kept for the next call.
+     *
+     * @param buffer {@code [0]} left, {@code [1]} right, overwritten, 16 bit scaled
+     * @param count the frames wanted
+     */
+    public void render(int[][] buffer, int count) {
+        int done = 0;
+        while (done < count) {
+            if (chunk == null || chunkPos >= chunk.length / 2) {
+                processChunk();
+                chunkPos = 0;
+            }
+            int n = Math.min(count - done, chunk.length / 2 - chunkPos);
+            double volume = driver.getVolume();
+            for (int i = 0; i < n; i++) {
+                int j = (chunkPos + i) * 2;
+                buffer[0][done + i] = (int) (Math.clamp(chunk[j] * volume, -1, 1) * 32767);
+                buffer[1][done + i] = (int) (Math.clamp(chunk[j + 1] * volume, -1, 1) * 32767);
+            }
+            chunkPos += n;
+            done += n;
+        }
+        frames += count;
+    }
+
+    /** runs the pipeline once, a buffer of it, the midi events due firing inside */
+    private void processChunk() {
+        // reset buffer index so that channel.getBufferIndex() returns 0
+        for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
+            var trk = driver.sequencer.tracks.get(t);
+            if (trk.channel != null) {
+                trk.channel.resetChannelBufferStatus();
+            }
+        }
+
+        // run the SiOPM processing pipeline
+        driver.module._beginProcess();
+        driver.effector._beginProcess();
+        driver.sequencer._process();
+        driver.effector._endProcess();
+        driver.module._endProcess();
+
+        chunk = driver.module.getOutput();
     }
 
     /** audio thread */
@@ -299,23 +384,10 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
         while (isOpen) {
             loopCount++;
             try {
-                // reset buffer index so that channel.getBufferIndex() returns 0
-                for (int t = 0; t < driver.sequencer.tracks.size(); t++) {
-                    var trk = driver.sequencer.tracks.get(t);
-                    if (trk.channel != null) {
-                        trk.channel.resetChannelBufferStatus();
-                    }
-                }
-
-                // run the SiOPM processing pipeline
-                driver.module._beginProcess();
-                driver.effector._beginProcess();
-                driver.sequencer._process();
-                driver.effector._endProcess();
-                driver.module._endProcess();
+                processChunk();
 
                 // convert double output [-1..1] to 16-bit little-endian PCM
-                double[] output = driver.module.getOutput();
+                double[] output = chunk;
                 double volume = driver.getVolume();
                 double maxAbs = 0;
                 for (int i = 0; i < output.length; i++) {
@@ -368,8 +440,10 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
     public void close() {
         isOpen = false;
         for (int i = 0; i < receivers.size(); i++) receivers.get(i).close();
-        line.drain();
-        line.close();
+        if (line != null) {
+            line.drain();
+            line.close();
+        }
         executor.shutdown();
     }
 
@@ -548,8 +622,10 @@ logger.log(Level.TRACE, "audioLoop STARTED, bufferLength=" + bufferLength + ", o
         public void send(MidiMessage message, long timeStamp) {
             if (!isOpen) throw new IllegalStateException("Receiver is not open");
 
-            // use Sequencer's timestamp if available, otherwise capture wall clock
-            long eventMicros = timeStamp >= 0 ? timeStamp : System.nanoTime() / 1000;
+            // use Sequencer's timestamp if available, otherwise, when a host is pulling the
+            // samples, where its rendering is at, and else capture wall clock
+            long eventMicros = timeStamp >= 0 ? timeStamp :
+                    rendering ? getMicrosecondPosition() : System.nanoTime() / 1000;
 
             // enforce minimum note duration: push noteOff forward if too close to noteOn
             if (message instanceof ShortMessage sm) {
