@@ -18,6 +18,7 @@ import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.Synthesizer;
 
+import org.si.sion.midi.MIDIModule;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vavi.sound.midi.MidiUtil.volume;
 
 
@@ -57,21 +59,18 @@ class SionSynthesizerTest {
     @Property
     String midi = "src/test/resources/test.mid";
 
+    @Property
+    String mld = "src/test/resources/test.mid";
+
     @BeforeEach
     void setup() throws Exception {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
 
-        try {
-            java.lang.reflect.Field f = org.si.sion.SiONDriver.class.getDeclaredField("_mutex");
-            f.setAccessible(true);
-            f.set(null, null);
-        } catch (Exception e) {
-            Debug.printStackTrace(e);
-        }
-
-        Debug.println("volume: " + volume);
+        System.setProperty("org.si.sion.systemExclusiveMode", MIDIModule.GS_MODE);
+        System.setProperty("org.si.sion.allowPluralDrivers", "true");
+Debug.println("volume: " + volume);
     }
 
     @Test
@@ -80,6 +79,7 @@ class SionSynthesizerTest {
         Synthesizer synthesizer = new SionSynthesizer();
         synthesizer.open();
 Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
 
         Sequencer sequencer = MidiSystem.getSequencer(false);
         Receiver receiver = synthesizer.getReceiver();
@@ -123,7 +123,8 @@ Debug.println(midi);
         Synthesizer synthesizer = MidiSystem.getSynthesizer();
         assertEquals(SionSynthesizer.class, synthesizer.getClass());
         synthesizer.open();
-        Debug.println("synthesizer: " + synthesizer);
+Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
 
         Sequencer sequencer = MidiSystem.getSequencer(false);
         Receiver receiver = synthesizer.getReceiver();
@@ -132,6 +133,54 @@ Debug.println(midi);
 Debug.println("sequencer: " + sequencer + ", " + sequencer.getClass().getName());
 
         Path file = Paths.get(midi);
+
+        Sequence seq = MidiSystem.getSequence(new BufferedInputStream(Files.newInputStream(file)));
+
+        CountDownLatch cdl = new CountDownLatch(1);
+        MetaEventListener mel = meta -> {
+Debug.println("META: " + meta.getType());
+            if (meta.getType() == 47) cdl.countDown();
+            // no need to forward tempo changes to the synthesizer, see SionSynthesizer#setBpm
+        };
+        sequencer.setSequence(seq);
+        sequencer.addMetaEventListener(mel);
+Debug.println("START");
+        sequencer.start();
+
+        volume(receiver, volume);
+
+if (!onIde) {
+ Thread.sleep(time);
+ sequencer.stop();
+Debug.println("STOP");
+} else {
+        cdl.await();
+}
+Debug.println("END");
+        sequencer.removeMetaEventListener(mel);
+        sequencer.close();
+
+        synthesizer.close();
+    }
+
+    @Test
+    @DisplayName("mld")
+    void test1() throws Exception {
+Debug.println(mld);
+
+        Synthesizer synthesizer = MidiSystem.getSynthesizer();
+        assertEquals(SionSynthesizer.class, synthesizer.getClass());
+        synthesizer.open();
+Debug.println("synthesizer: " + synthesizer);
+        assertInstanceOf(SionSynthesizer.class, synthesizer);
+
+        Sequencer sequencer = MidiSystem.getSequencer(false);
+        Receiver receiver = synthesizer.getReceiver();
+        sequencer.getTransmitter().setReceiver(receiver);
+        sequencer.open();
+Debug.println("sequencer: " + sequencer + ", " + sequencer.getClass().getName());
+
+        Path file = Paths.get(mld);
 
         Sequence seq = MidiSystem.getSequence(new BufferedInputStream(Files.newInputStream(file)));
 
@@ -150,7 +199,7 @@ Debug.println("START");
 if (!onIde) {
  Thread.sleep(time);
  sequencer.stop();
-Debug.println("STOP");
+ Debug.println("STOP");
 } else {
         cdl.await();
 }

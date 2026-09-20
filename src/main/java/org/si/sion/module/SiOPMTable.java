@@ -708,7 +708,7 @@ public class SiOPMTable {
         imax = SAMPLING_TABLE_SIZE >> 2;
         imax2 = SAMPLING_TABLE_SIZE >> 1;
         imax4 = SAMPLING_TABLE_SIZE;
-        dp = 1 / imax;
+        dp = 1. / imax;
         for (i = 0, p = dp * 0.5; i < imax; i++, p += dp) {
             iv = calcLogTableIndex(p);
             table1[i] = iv;   // positive index

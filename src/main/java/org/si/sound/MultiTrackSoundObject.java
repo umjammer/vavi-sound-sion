@@ -139,14 +139,14 @@ public class MultiTrackSoundObject extends SoundObject {
     /** you cannot call play() in MultiTrackSoundObject. */
     @Override
     public void play() {
-        throw _errorNotAvailable("play()");
+        throw new IllegalStateException("play()" + " method instanceof not available in this object.");
     }
 
 
     /** you cannot call stop() in MultiTrackSoundObject. */
     @Override
     public void stop() {
-        throw _errorNotAvailable("stop()");
+        throw new IllegalStateException("stop()" + " method instanceof not available in this object.");
     }
 
 

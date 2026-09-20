@@ -171,7 +171,7 @@ public class MMLParser {
                 list = sign.split("[\\s,]");
                 for (i = 0; i < list.length; i++) {
                     note = noteLetters.indexOf(list[i].charAt(0));
-                    if (note == -1) throw errorKeySign(sign);
+                    if (note == -1) throw new IllegalArgumentException("Cannot recognize '" + sign + "' as a key signiture.");
                     if (list[i].length() > 1) {
                         shift = list[i].charAt(1);
                         _keySignatureCustom[note] = (shift == '+' || shift == '#') ? 1 : (shift == '-' || shift == 'b') ? -1 : 0;
@@ -279,7 +279,7 @@ public class MMLParser {
                 _pushMMLEvent(id, data, length);
             } else {
                 // Error when there is no NOTE before SLUR event.
-                throw errorSyntax("* or &");
+                throw new IllegalArgumentException("Syntax error '" + "* or &" + "'.");
             }
         }
 
@@ -478,7 +478,7 @@ public class MMLParser {
                 } else if (res.group(REX_USER_EVENT) != null) {
                     // user defined events.
                     if (! _userDefinedEventID.containsKey(res.group(REX_USER_EVENT)))
-                        throw errorUnknown("REX_USER_EVENT");
+                        throw new IllegalArgumentException("Unknown error #" + "REX_USER_EVENT" + ".");
                     addMMLEvent(_userDefinedEventID.get(res.group(REX_USER_EVENT)), __param(res, 0), 0, false);
                 } else if (res.group(REX_EVENT) != null) {
                     // default events.
@@ -561,7 +561,7 @@ public class MMLParser {
                     }
                 } else if (res.group(REX_SYSTEM) != null) {
                     // system command is only available at the top of the channel sequence.
-                    if (_lastEvent.id != MMLEvent.SEQUENCE_HEAD) throw errorSyntax(res.group(0));
+                    if (_lastEvent.id != MMLEvent.SEQUENCE_HEAD) throw new IllegalArgumentException("Syntax error '" + res.group(0) + "'.");
                     // add system event
                     addMMLEvent(MMLEvent.SYSTEM_EVENT, _regSystemEventString(res.group(REX_SYSTEM)), 0, false);
                 } else if (res.group(REX_TABLE) != null) {
@@ -569,7 +569,7 @@ public class MMLParser {
                     addMMLEvent(MMLEvent.TABLE_EVENT, _regSystemEventString(res.group(REX_TABLE)), 0, false);
                 } else {
                     // syntax error
-                    throw errorSyntax(res.group(0));
+                    throw new IllegalArgumentException("Syntax error '" + res.group(0) + "'.");
                 }
             } // Close if (res.group(REX_WHITESPACE) == null)
             // halt
@@ -595,7 +595,7 @@ public class MMLParser {
         int len = Integer.parseInt(paramStr);
         if (len == 0) return 0;
         int iLength = _setting.resolution / len;
-        if (iLength < 1 || iLength > _setting.resolution) throw errorRangeOver("length", 1, _setting.resolution);
+        if (iLength < 1 || iLength > _setting.resolution) throw new IllegalArgumentException("The parameter of '" + "length" + "' command must ragne from " + 1 + " to " + _setting.resolution + ".");
         return iLength;
     }
 
@@ -675,7 +675,7 @@ public class MMLParser {
         } else if (_lastEvent.id == MMLEvent.REST || _lastEvent.id == MMLEvent.NOTE) {
             _lastEvent.length += __calcLength(iLength, period);
         } else {
-            throw errorSyntax("tie command");
+            throw new IllegalArgumentException("Syntax error '" + "tie command" + "'.");
         }
     }
 
@@ -697,7 +697,7 @@ public class MMLParser {
     // gate time
     private void _quant(int param) {
         if (param < _setting.minQuantRatio || param > _setting.maxQuantRatio) {
-            throw errorRangeOver("q", _setting.minQuantRatio, _setting.maxQuantRatio);
+            throw new IllegalArgumentException("The parameter of '" + "q" + "' command must ragne from " + _setting.minQuantRatio + " to " + _setting.maxQuantRatio + ".");
         }
         addMMLEvent(MMLEvent.QUANT_RATIO, param, 0, false);
     }
@@ -705,7 +705,7 @@ public class MMLParser {
     // absolute gate time
     private void _at_quant(int param) {
         if (param < _setting.minQuantCount || param > _setting.maxQuantCount) {
-            throw errorRangeOver("@q", _setting.minQuantCount, _setting.maxQuantCount);
+            throw new IllegalArgumentException("The parameter of '" + "@q" + "' command must ragne from " + _setting.minQuantCount + " to " + _setting.maxQuantCount + ".");
         }
         addMMLEvent(MMLEvent.QUANT_COUNT, param, 0, false);
     }
@@ -727,7 +727,7 @@ public class MMLParser {
     // octave
     private void _octave(int param) {
         if (param < _setting.minOctave || param > _setting.maxOctave) {
-            throw errorRangeOver("o", _setting.minOctave, _setting.maxOctave);
+            throw new IllegalArgumentException("The parameter of '" + "o" + "' command must ragne from " + _setting.minOctave + " to " + _setting.maxOctave + ".");
         }
         _staticOctave = param;
     }
@@ -746,7 +746,7 @@ public class MMLParser {
     // volume
     private void _volume(int param) {
         if (param < 0 || param > _setting.maxVolume) {
-            throw errorRangeOver("v", 0, _setting.maxVolume);
+            throw new IllegalArgumentException("The parameter of '" + "v" + "' command must ragne from " + 0 + " to " + _setting.maxVolume + ".");
         }
         addMMLEvent(MMLEvent.VOLUME, param, 0, false);
     }
@@ -754,7 +754,7 @@ public class MMLParser {
     // fine volume
     private void _at_volume(int param) {
         if (param < 0 || param > _setting.maxFineVolume) {
-            throw errorRangeOver("@v", 0, _setting.maxFineVolume);
+            throw new IllegalArgumentException("The parameter of '" + "@v" + "' command must ragne from " + 0 + " to " + _setting.maxFineVolume + ".");
         }
         addMMLEvent(MMLEvent.FINE_VOLUME, param, 0, false);
     }
@@ -779,21 +779,21 @@ public class MMLParser {
 
     // begin repeating
     private void _repeatBegin(int rep) {
-        if (rep < 1 || rep > 65535) throw errorRangeOver("[", 1, 65535);
+        if (rep < 1 || rep > 65535) throw new IllegalArgumentException("The parameter of '" + "[" + "' command must ragne from " + 1 + " to " + 65535 + ".");
         addMMLEvent(MMLEvent.REPEAT_BEGIN, rep, 0, false);
         _repeatStac.add(0, _lastEvent);
     }
 
     // break repeating
     private void _repeatBreak() {
-        if (_repeatStac.isEmpty()) throw errorStacUnderflow("|");
+        if (_repeatStac.isEmpty()) throw new IllegalArgumentException("The stac of '" + "|" + "' command instanceof underflow.");
         addMMLEvent(MMLEvent.REPEAT_BREAK, 0, 0, false);
         _lastEvent.jump = _repeatStac.get(0);
     }
 
     // end repeating
     private void _repeatEnd(int rep) {
-        if (_repeatStac.isEmpty()) throw errorStacUnderflow("]");
+        if (_repeatStac.isEmpty()) throw new IllegalArgumentException("The stac of '" + "]" + "' command instanceof underflow.");
         addMMLEvent(MMLEvent.REPEAT_END, 0, 0, false);
         MMLEvent beginEvent = _repeatStac.remove(0);
         _lastEvent.jump = beginEvent;   // rep_end.jump   = rep_start
@@ -801,7 +801,7 @@ public class MMLParser {
 
         // update repeat count
         if (rep != Integer.MIN_VALUE) {
-            if (rep < 1 || rep > 65535) throw errorRangeOver("]", 1, 65535);
+            if (rep < 1 || rep > 65535) throw new IllegalArgumentException("The parameter of '" + "]" + "' command must ragne from " + 1 + " to " + 65535 + ".");
             beginEvent.data = rep;
         }
     }
@@ -854,35 +854,5 @@ public class MMLParser {
     // tempo
     private void _tempo(int t) {
         addMMLEvent(MMLEvent.TEMPO, t, 0, false);
-    }
-
-    // errors
-    //
-    public RuntimeException errorUnknown(String n) {
-        return new RuntimeException("MMLParser Error : Unknown error #" + n + ".");
-    }
-
-    public RuntimeException errorNoteOutofRange(int note) {
-        return new RuntimeException("MMLParser Error : Note #" + note + " is out of range.");
-    }
-
-    public RuntimeException errorSyntax(String syn) {
-        return new RuntimeException("MMLParser Error : Syntax error '" + syn + "'.");
-    }
-
-    public RuntimeException errorRangeOver(String cmd, int min, int max) {
-        return new RuntimeException("MMLParser Error : The parameter of '" + cmd + "' command must ragne from " + min + " to " + max + ".");
-    }
-
-    public RuntimeException errorStacUnderflow(String cmd) {
-        return new RuntimeException("MMLParser Error : The stac of '" + cmd + "' command instanceof underflow.");
-    }
-
-    public RuntimeException errorStacOverflow(String cmd) {
-        return new RuntimeException("MMLParser Error : The stac of '" + cmd + "' command instanceof overflow.");
-    }
-
-    public RuntimeException errorKeySign(String ksign) {
-        return new RuntimeException("MMLParser Error : Cannot recognize '" + ksign + "' as a key signiture.");
     }
 }

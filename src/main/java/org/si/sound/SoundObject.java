@@ -744,17 +744,4 @@ public class SoundObject extends org.si.utils.EventDispatcher {
             dispatchEvent(event);
         }
     }
-
-    // errors
-    //
-
-    /** not available */
-    protected static RuntimeException _errorNotAvailable(String str) {
-        return new RuntimeException("SoundObject; " + str + " method instanceof not available in this object.");
-    }
-
-    /** Cannot change */
-    protected static RuntimeException _errorCannotChange(String str) {
-        return new RuntimeException("SoundObject; You can not change " + str + " property in this object.");
-    }
 }

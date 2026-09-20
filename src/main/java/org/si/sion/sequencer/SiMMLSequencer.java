@@ -668,7 +668,7 @@ public class SiMMLSequencer extends MMLSequencer {
     @Override
     protected void onTableParse(MMLEvent prev, String table) {
         if (prev.id < _envelopEventID || _envelopEventID + 10 < prev.id)
-            throw _errorInternalTable();
+            throw new IllegalArgumentException("Internal table instanceof available only for envelop commands.");
         Pattern rex = Pattern.compile("\\{([^}]*)\\\\}(.*)", Pattern.DOTALL);
         Matcher res = rex.matcher(table);
         if (res.find()) {
@@ -676,7 +676,7 @@ public class SiMMLSequencer extends MMLSequencer {
             String pfx = res.group(2);
             SiMMLEnvelopTable env = new SiMMLEnvelopTable().parseMML(dat, pfx, 0);
             if (env.head == null)
-                throw _errorParameterNotValid("{..}", dat);
+                throw new IllegalArgumentException("Parameter not valid. '" + dat + "' in " + "{..}");
             ((SiMMLData) mmlData).setEnvelopTable(_internalTableIndex, env);
             prev.data = _internalTableIndex;
             _internalTableIndex--;
@@ -835,7 +835,7 @@ public class SiMMLSequencer extends MMLSequencer {
                 if (noData) dat = pfx;
                 if (dat.equals("dynamic")) _macroExpandDynamic = true;
                 else if (Objects.equals(dat, "static")) _macroExpandDynamic = false;
-                else throw _errorParameterNotValid("#MACRO", dat);
+                else throw new IllegalArgumentException("Parameter not valid. '" + dat + "' in " + "#MACRO");
                 return true;
             }
             case "#QUANT": {
@@ -862,43 +862,43 @@ public class SiMMLSequencer extends MMLSequencer {
                     }
                     case "octave" -> setting.octavePolarization = -1;
                     case "volume" -> setting.volumePolarization = -1;
-                    default -> throw _errorParameterNotValid("#REVERSE", dat);
+                    default -> throw new IllegalArgumentException("Parameter not valid. '" + dat + "' in " + "#REVERSE");
                 }
                 return true;
             }
 
             // tables
             case "#TABLE": {
-                if (num < 0 || num > 254) throw _errorParameterNotValid("#TABLE", String.valueOf(num));
+                if (num < 0 || num > 254) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#TABLE");
                 env = new SiMMLEnvelopTable().parseMML(dat, pfx, 65536);
-                if (env.head == null) throw _errorParameterNotValid("#TABLE", dat);
+                if (env.head == null) throw new IllegalArgumentException("Parameter not valid. '" + dat + "' in " + "#TABLE");
                 ((SiMMLData) mmlData).setEnvelopTable(num, env);
                 return true;
             }
             case "#WAV": {
-                if (num < 0 || num > 255) throw _errorParameterNotValid("#WAV", String.valueOf(num));
+                if (num < 0 || num > 255) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#WAV");
                 ((SiMMLData) mmlData).setWaveTable(num, Translator.parseWAV(dat, pfx));
                 return true;
             }
             case "#WAVB": {
-                if (num < 0 || num > 255) throw _errorParameterNotValid("#WAVB", String.valueOf(num));
+                if (num < 0 || num > 255) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#WAVB");
                 ((SiMMLData) mmlData).setWaveTable(num, Translator.parseWAVB((noData) ? pfx : dat));
                 return true;
             }
 
             // pcm voice
             case "#SAMPLER": {
-                if (num < 0 || num > 255) throw _errorParameterNotValid("#SAMPLE", String.valueOf(num));
+                if (num < 0 || num > 255) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#SAMPLE");
                 if (!__setSamplerWave(num, dat)) __setAsCommandObject(cmd, num, dat, pfx);
                 return true;
             }
             case "#PCMWAVE": {
-                if (num < 0 || num > 255) throw _errorParameterNotValid("#PCMWAVE", String.valueOf(num));
+                if (num < 0 || num > 255) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#PCMWAVE");
                 if (!__setPCMWave(num, dat)) __setAsCommandObject(cmd, num, dat, pfx);
                 return true;
             }
             case "#PCMVOICE": {
-                if (num < 0 || num > 255) throw _errorParameterNotValid("#PCMVOICE", String.valueOf(num));
+                if (num < 0 || num > 255) throw new IllegalArgumentException("Parameter not valid. '" + String.valueOf(num) + "' in " + "#PCMVOICE");
                 if (!__setPCMVoice(num, dat, pfx)) __setAsCommandObject(cmd, num, dat, pfx);
                 return true;
             }
@@ -911,7 +911,7 @@ public class SiMMLSequencer extends MMLSequencer {
             case "#WAVEXP":
             case "#PCMB":
             case "#PCMC":
-                throw _errorSystemCommand("#" + cmd + " is not supported currently.");
+                throw new IllegalArgumentException("System command error. " + "#" + cmd + " is not supported currently.");
 
                 // user defined system commands ?
             default:
@@ -1004,12 +1004,12 @@ public class SiMMLSequencer extends MMLSequencer {
         if (res.matches()) {
             switch (res.group(1)) {
                 case "FM":
-                    if (res.group(2) == null) throw _errorSystemCommand(letter);
+                    if (res.group(2) == null) throw new IllegalArgumentException("System command error. " + letter);
                     _connector.parse(res.group(2));
                     seq = _connector.connect(seqGroup, seq);
                     break;
                 default:
-                    throw _errorSystemCommand(letter);
+                    throw new IllegalArgumentException("System command error. " + letter);
             }
         }
 
@@ -1035,9 +1035,9 @@ public class SiMMLSequencer extends MMLSequencer {
             for (prev = seq.headEvent; prev.next != null; prev = e) {
                 e = prev.next;
                 // initializing sequence cannot include procssing events
-                if (e.length != 0) throw _errorInitSequence(mml);
+                if (e.length != 0) throw new IllegalArgumentException("Initializing sequence cannot include note, rest, '%' nor '@'. " + mml);
                 // initializing sequence cannot include % and @.
-                if (e.id == MMLEvent.MOD_TYPE || e.id == MMLEvent.MOD_PARAM) throw _errorInitSequence(mml);
+                if (e.id == MMLEvent.MOD_TYPE || e.id == MMLEvent.MOD_PARAM) throw new IllegalArgumentException("Initializing sequence cannot include note, rest, '%' nor '@'. " + mml);
                 // parse table event
                 if (e.id == MMLEvent.TABLE_EVENT) {
                     callOnTableParse(prev);
@@ -1635,43 +1635,5 @@ public class SiMMLSequencer extends MMLSequencer {
         e = e.getParameters(_p, 2);
         _currentTrack._callbackUpdateRegister.accept(_p[0], _p[1]);
         return e.next;
-    }
-
-    // errors
-    //
-    private RuntimeException _errorSyntax(String str) {
-        return new RuntimeException("SiMMLSequencer error : Syntax error. " + str);
-    }
-
-    private RuntimeException _errorOutOfRange(String cmd, int n) {
-        return new RuntimeException("SiMMLSequencer error : Out of range. '" + cmd + "' = " + n);
-    }
-
-    private RuntimeException _errorToneParameterNotValid(String cmd, int chParam, int opParam) {
-        return new RuntimeException("SiMMLSequencer error : Parameter count instanceof not valid in '" + cmd + "'. " + chParam + " parameters for channel and " + opParam + " parameters for each operator.");
-    }
-
-    private RuntimeException _errorParameterNotValid(String cmd, String param) {
-        return new RuntimeException("SiMMLSequencer error : Parameter not valid. '" + param + "' in " + cmd);
-    }
-
-    private RuntimeException _errorInternalTable() {
-        return new RuntimeException("SiMMLSequencer error : Internal table instanceof available only for envelop commands.");
-    }
-
-    private RuntimeException _errorCircularReference(String mcr) {
-        return new RuntimeException("SiMMLSequencer error : Circular reference in dynamic macro. " + mcr);
-    }
-
-    private RuntimeException _errorInitSequence(String mml) {
-        return new RuntimeException("SiMMLSequencer error : Initializing sequence cannot include note, rest, '%' nor '@'. " + mml);
-    }
-
-    private RuntimeException _errorSystemCommand(String str) {
-        return new RuntimeException("SiMMLSequencer error : System command error. " + str);
-    }
-
-    private RuntimeException _errorUnknown(String str) {
-        return new RuntimeException("SiMMLSequencer error : Unknown. " + str);
     }
 }

@@ -185,14 +185,14 @@ public class Scale {
             else if (note > 11) note -= 12;
             if (mat.group(1) != null) {
                 int oct = Character.digit(mat.group(1).charAt(1), 10);
-                if (oct < 0) throw _errorInvalidScaleName(str);
+                if (oct < 0) throw new IllegalArgumentException("Invalid scale name. '" + str + "'");
                 note += oct * 12;
             } else {
                 note += _defaultCenterOctave * 12;
             }
 
             if (mat.group(4) != null) {
-                if (!(_scaleTableDictionary.containsKey(mat.group(4))))throw _errorInvalidScaleName(str);
+                if (!(_scaleTableDictionary.containsKey(mat.group(4)))) throw new IllegalArgumentException("Invalid scale name. '" + str + "'");
                 _scaleTable = _scaleTableDictionary.get(mat.group(4));
                 _scaleName = mat.group(4);
             } else {
@@ -201,7 +201,7 @@ public class Scale {
             }
             this.setRootNote(note);
         } else {
-            throw _errorInvalidScaleName(str);
+            throw new IllegalArgumentException("Invalid scale name. '" + str + "'");
         }
     }
 
@@ -272,7 +272,7 @@ public class Scale {
      */
     public void setScaleTable(String name, int rootNote, int[] table) {
         _scaleName = name;
-        int i, imax = (table.length < 25) ? table.length : 25;
+        int i, imax = Math.min(table.length, 25);
         _scaleTable = 0;
         for (i = 0; i < imax; i++) if (table[i] != 0) _scaleTable |= (1 << i);
         this.setRootNote(rootNote);
@@ -352,24 +352,16 @@ public class Scale {
     public Scale copyFrom(Scale src) {
         _scaleName = src._scaleName;
         _scaleTable = src._scaleTable;
-        int i, imax = src._scaleNotes.size();
+        int imax = src._scaleNotes.size();
         _scaleNotes.clear();
-        for (i = 0; i < imax; i++) {
+        for (int i = 0; i < imax; i++) {
             _scaleNotes.add(src._scaleNotes.get(i));
         }
         imax = src._tensionNotes.size();
         _tensionNotes.clear();
-        for (i = 0; i < imax; i++) {
+        for (int i = 0; i < imax; i++) {
             _tensionNotes.add(src._tensionNotes.get(i));
         }
         return this;
-    }
-
-    // errors
-    //
-
-    /** Invalid scale name error */
-    protected Error _errorInvalidScaleName(String name) {
-        return new Error("Scale; Invalid scale name. '" + name + "'");
     }
 }

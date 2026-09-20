@@ -79,7 +79,7 @@ public class MMLExecutorConnector {
 
             // modulation start "("
             if (res.group(1) != null) {
-                if (prev == null) throw _errorWrongFormula("'(' in " + form);
+                if (prev == null) throw new IllegalStateException("Wrong connection formula. " + "'(' in " + form);
                 prev.firstChild = elem;
                 elem.parent = prev;
             } else {
@@ -95,7 +95,7 @@ public class MMLExecutorConnector {
             if (res.group(4) != null) {
                 imax = String.valueOf(res.group(4)).length();
                 for (i = 0; i < imax; i++) {
-                    if (elem.parent == null) throw _errorWrongFormula("')' in " + form);
+                    if (elem.parent == null) throw new IllegalStateException("Wrong connection formula. " + "')' in " + form);
                     elem = elem.parent;
                 }
             }
@@ -105,7 +105,7 @@ public class MMLExecutorConnector {
         }
 
         if (prev == null || prev.parent != null) {
-            throw _errorWrongFormula(form);
+            throw new IllegalStateException("Wrong connection formula. " + form);
         }
     }
 
@@ -114,7 +114,7 @@ public class MMLExecutorConnector {
         // create sequence list
         List<MMLSequence> seqList = new ArrayList<>(_sequenceCount);
         for (int i = 0; i < _sequenceCount; i++) {
-            if (prev.getNextSequence() == null) throw _errorSequenceNotEnough();
+            if (prev.getNextSequence() == null) throw new IllegalStateException("Not enough sequences to connect.");
             seqList.set(i, prev.getNextSequence());
             prev.getNextSequence()._removeFromChain();
         }
@@ -171,16 +171,6 @@ public class MMLExecutorConnector {
         // next oscillator
         if (elem.next != null) _connect(elem.next, false, outPipe, seqGroup, seqList, prev);
     }
-
-    // errors
-    //
-    private RuntimeException _errorWrongFormula(String form) {
-        return new RuntimeException("MMLExecutorConnector error : Wrong connection formula. " + form);
-    }
-
-    private RuntimeException _errorSequenceNotEnough() {
-        return new RuntimeException("MMLExecutorConnector error: Not enough sequences to connect.");
-    }
 }
 
 // MMLExecutorConnector element class
@@ -191,9 +181,6 @@ class MECElement {
     public MECElement parent = null;
     public MECElement next = null;
     public MECElement firstChild = null;
-
-    void MECElement() {
-    }
 
     public MECElement initialize(int num) {
         number = num;

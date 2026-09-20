@@ -102,7 +102,7 @@ public class SiMMLData extends MMLData {
      */
     public void setVoice(int index, SiMMLVoice voice) {
         if (index >= 0 && index < SiMMLTable.VOICE_MAX) {
-            if (!voice.isSuitableForFMVoice()) throw errorNotGoodFMVoice();
+            if (!voice.isSuitableForFMVoice()) throw new IllegalArgumentException("Cannot register the voice.");
             fmVoices[index] = voice;
         }
     }
@@ -153,11 +153,5 @@ public class SiMMLData extends MMLData {
         SiOPMTable._instance._stencilPCMVoices = pcmVoices;
         SiMMLTable._instance._stencilEnvelops = envelopes;
         SiMMLTable._instance._stencilVoices = fmVoices;
-    }
-
-    // error
-    //
-    private RuntimeException errorNotGoodFMVoice() {
-        return new RuntimeException("SiONDriver error; Cannot register the voice.");
     }
 }

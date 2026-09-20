@@ -32,11 +32,11 @@ public class MIDIModule {
     //
 
     /** General MIDI mode */
-    public final String GM_MODE = "GMmode";
+    public static final String GM_MODE = "GMmode";
     /** Roland GS system exclusive mode */
-    public final String GS_MODE = "GSmode";
+    public static final String GS_MODE = "GSmode";
     /** YAMAHA XG system exclusive mode */
-    public final String XG_MODE = "XGmode";
+    public static final String XG_MODE = "XGmode";
 
     // variables
     //
@@ -152,6 +152,7 @@ public class MIDIModule {
      *
      * @param polyphony        polyphony
      * @param midiChannelCount MIDI channel count
+     * @param systemExclusiveMode
      */
     public MIDIModule(int polyphony, int midiChannelCount, String systemExclusiveMode) {
         int slot, i;
@@ -233,9 +234,8 @@ public class MIDIModule {
      */
     public void setDrumSamplerTable(SiOPMWaveSamplerTable table) {
         SiONVoice voice = new SiONVoice();
-        int i;
         voice.setSamplerTable(table);
-        for (i = 0; i < 128; i++) drumVoiceSet[i] = voice;
+        for (int i = 0; i < 128; i++) drumVoiceSet[i] = voice;
     }
 
     /**
@@ -281,9 +281,29 @@ public class MIDIModule {
             voiceSet[i] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi")).get(i);
         }
         for (int i = 0; i < 60; i++) {
-            if (!Boolean.parseBoolean(System.getProperty("org.si.sion.midi.gm", "false"))) {
-                drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi.drum")).get(i);
-            }
+            drumVoiceSet[i + 24] = ((SiONPresetVoice.SiONVoiceList) _internalPreset.get("svmidi.drum")).get(i);
+        }
+    }
+
+    /**
+     * set the voice of a program while playing.
+     * <p>
+     * [vavi] not in the original. an operator keeps the voice of the program it played last
+     * and does not look at voiceSet[] again until the program changes, so a voice put into
+     * voiceSet[] directly never reaches an operator which played that program already. this
+     * makes such operators load the voice again at their next note on.
+     * </p>
+     *
+     * @param programNumber program number [0-127]
+     * @param voice voice to set
+     */
+    public void setVoice(int programNumber, SiONVoice voice) {
+        voiceSet[programNumber & 127] = voice;
+        for (MIDIModuleOperator ope = _freeOperators.next; ope != _freeOperators; ope = ope.next) {
+            if (ope.programNumber == programNumber) ope.programNumber = -1;
+        }
+        for (MIDIModuleOperator ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
+            if (ope.programNumber == programNumber) ope.programNumber = -1;
         }
     }
 
@@ -295,18 +315,28 @@ public class MIDIModule {
         MIDIModuleOperator ope;
         SiMMLTrack track = null;
         SiOPMChannelBase channel;
-        int drumExcID = 0,
-                sionTrackNote = note;
+        int drumExcID = 0;
+        int sionTrackNote = note;
 
         if (!midiChannel.mute) {
 
             // get operator
             if (midiChannel.activeOperatorCount >= midiChannel.maxOperatorCount) {
                 ope = null;
+                // first try to steal a sustained operator on the same channel
                 for (ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
-                    if (ope.channel == channelNum) {
+                    if (ope.channel == channelNum && ope.isSustained) {
                         _activeOperators.remove(ope);
                         break;
+                    }
+                }
+                // otherwise steal the oldest active operator on the same channel
+                if (ope == null || ope == _activeOperators) {
+                    for (ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
+                        if (ope.channel == channelNum) {
+                            _activeOperators.remove(ope);
+                            break;
+                        }
                     }
                 }
                 if (ope == null || ope == _activeOperators) {
@@ -314,7 +344,18 @@ public class MIDIModule {
                 }
             } else {
                 ope = _freeOperators.shift();
-                if (ope == null) ope = _activeOperators.shift();
+                if (ope == null) {
+                    // prefer stealing a sustained operator over a normal active one
+                    for (ope = _activeOperators.next; ope != _activeOperators; ope = ope.next) {
+                        if (ope.isSustained) {
+                            _activeOperators.remove(ope);
+                            break;
+                        }
+                    }
+                    if (ope == null || ope == _activeOperators) {
+                        ope = _activeOperators.shift();
+                    }
+                }
             }
 
             if (ope == null) {
@@ -324,6 +365,11 @@ public class MIDIModule {
             if (ope.isNoteOn) {
                 ope.sionTrack.dispatchEventTrigger(false);
                 midiChannels[ope.channel].activeOperatorCount--;
+            } else if (ope.isSustained) {
+                // sustained operator: track was still counting toward activeOperatorCount
+                ope.sionTrack.keyOff(0, false);
+                midiChannels[ope.channel].activeOperatorCount--;
+                ope.isSustained = false;
             }
 
             // voice setting
@@ -420,14 +466,27 @@ public class MIDIModule {
         int channelNum = ope.channel, note = ope.note;
         MIDIModuleChannel midiChannel = midiChannels[channelNum];
         if (!midiChannel.mute) {
-            if (midiChannel.sustainPedal) ope.sionTrack.dispatchEventTrigger(false);
-            else if (midiChannel.drumMode == 0 || _drumNoteOffAvailable[note] != 0) ope.sionTrack.keyOff(0, false);
-            ope.isNoteOn = false;
-            ope.note = -1;
-            ope.channel = -1;
-            midiChannel.activeOperatorCount--;
-            _activeOperators.remove(ope);
-            _freeOperators.add(ope);
+            if (midiChannel.sustainPedal) {
+                // sustain pedal is on: keep operator in active list, mark as sustained
+                // the track keeps sounding (no keyOff), operator stays active
+                ope.isSustained = true;
+                ope.isNoteOn = false;
+            } else {
+                if (midiChannel.drumMode == 0 || _drumNoteOffAvailable[note] != 0) {
+                    ope.sionTrack.keyOff(0, false);
+                } else {
+                    // drum note-off without keyOff: still need to clear noteOn
+                    // so the track can idle after envelope decay
+                    ope.sionTrack.channel.noteOff();
+                }
+                ope.isNoteOn = false;
+                ope.isSustained = false;
+                ope.note = -1;
+                ope.channel = -1;
+                midiChannel.activeOperatorCount--;
+                _activeOperators.remove(ope);
+                _freeOperators.add(ope);
+            }
         }
 
         if ((_dispatchFlags & midiChannel.sionMIDIEventType & SiONMIDIEventFlag.NOTE_OFF) != 0) {
@@ -518,7 +577,26 @@ public class MIDIModule {
             break;
 
             case SMFEvent.CC_SUSTAIN_PEDAL:
+                boolean wasOn = midiChannel.sustainPedal;
                 midiChannel.sustainPedal = (data > 64);
+                // when pedal is released, keyOff and free all sustained operators on this channel
+                if (wasOn && !midiChannel.sustainPedal) {
+                    MIDIModuleOperator opeNext;
+                    for (MIDIModuleOperator sustained = _activeOperators.next; sustained != _activeOperators; sustained = opeNext) {
+                        opeNext = sustained.next;
+                        if (sustained.channel == channelNum && sustained.isSustained) {
+                            if (midiChannel.drumMode == 0 || _drumNoteOffAvailable[sustained.note] != 0)
+                                sustained.sionTrack.keyOff(0, false);
+                            sustained.isSustained = false;
+                            sustained.isNoteOn = false;
+                            sustained.note = -1;
+                            sustained.channel = -1;
+                            midiChannel.activeOperatorCount--;
+                            _activeOperators.remove(sustained);
+                            _freeOperators.add(sustained);
+                        }
+                    }
+                }
                 break;
             case SMFEvent.CC_PORTAMENTO:
                 midiChannel.portamento = (data > 64);

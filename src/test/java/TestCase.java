@@ -52,24 +52,20 @@ class TestCase {
             PropsEntity.Util.bind(this);
         }
 
-        try {
-            java.lang.reflect.Field f = org.si.sion.SiONDriver.class.getDeclaredField("_mutex");
-            f.setAccessible(true);
-            f.set(null, null);
-        } catch (Exception e) {
-            Debug.printStackTrace(e);
-        }
-
+        System.setProperty("org.si.sion.maxPolyphony", "128"); // doesn't help
+        System.setProperty("org.si.sion.bufferSize", "512");
+        System.setProperty("org.si.sion.allowPluralDrivers", "true");
 Debug.print("volume: " + volume);
     }
 
     @Test
     void test1() throws Exception {
-        SiONDriver driver = new SiONDriver(2048, 2, 44100, 0);
+        int bufSize = Integer.getInteger("org.si.sion.bufferSize", 2048); // under 512 brakes sounding, spi accepts 256 why?
+        SiONDriver driver = new SiONDriver(bufSize, 2, 44100, 0);
         AtomicBoolean smfFinished = new AtomicBoolean(false);
         boolean isSmf;
 
-        if (midi != null) {
+        if (System.getProperty("SystemProperty", "").equals("ide") && midi != null) {
             byte[] bytes = Files.readAllBytes(Paths.get(midi));
             ByteArray byteArray = new ByteArray();
             byteArray.writeBytes(bytes);
@@ -91,11 +87,16 @@ Debug.print("volume: " + volume);
         line.start();
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        var midiModule = driver.getMidiModule();
         Future<?> playback = executor.submit(() -> {
             int bufferSize = driver.getBufferLength();
             byte[] out = new byte[bufferSize * 4];
+            int loopCount = 0;
+            long totalSamples = 0;
+            double cumulativeSum = 0;
             try {
                 do {
+                    loopCount++;
                     driver.module._beginProcess();
                     driver.effector._beginProcess();
                     driver.sequencer._process();
@@ -103,11 +104,22 @@ Debug.print("volume: " + volume);
                     driver.module._endProcess();
 
                     double[] output = driver.module.getOutput();
+                    double maxAbs = 0;
                     for (int i = 0; i < output.length; i++) {
+                        if (Math.abs(output[i]) > maxAbs) maxAbs = Math.abs(output[i]);
+                        cumulativeSum += output[i] * output[i];
                         short s = (short) (output[i] * 32767);
-                        // Little endian
                         out[i * 2] = (byte) (s & 0xff);
                         out[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
+                    }
+                    totalSamples += output.length;
+                    // Print cumulative RMS at 5-second intervals
+                    long loopsSoFar = totalSamples / (bufferSize * 2);
+                    long loopsPerFiveSec = 44100L * 5 / bufferSize;
+                    if (loopsSoFar > 0 && loopsSoFar % loopsPerFiveSec == 0) {
+                        double rms = Math.sqrt(cumulativeSum / totalSamples);
+                        Debug.println("HASH buf=%d t=%.1fs cumRMS=%.10f samples=%d".formatted(
+                            bufferSize, totalSamples / 88200.0, rms, totalSamples));
                     }
                     line.write(out, 0, out.length);
                 } while (isSmf ? !smfFinished.get() : !driver.sequencer.getIsSequenceFinished());

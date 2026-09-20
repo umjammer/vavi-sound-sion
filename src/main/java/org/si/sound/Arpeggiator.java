@@ -14,16 +14,18 @@ import org.si.sound.patterns.Note;
 import org.si.sound.patterns.Sequencer;
 
 
-/** @eventType org.si.sound.events.SoundObjectEvent.ENTER_FRAME */
-// [Event(name="enterFrame",   type="org.si.sound.events.SoundObjectEvent")]
-/** @eventType org.si.sound.events.SoundObjectEvent.ENTER_SEGMENT */
-// [Event(name="enterSegment", type="org.si.sound.events.SoundObjectEvent")]
 
-/** Arpeggiator provides monophonic arpeggio pattern sound. */
+/**
+ * Arpeggiator provides monophonic arpeggio pattern sound.
+ * <p>
+ * <li>{@code org.si.sound.events.SoundObjectEvent.ENTER_FRAME}</li>
+ * <li>{@code org.si.sound.events.SoundObjectEvent.ENTER_SEGMENT}</li>
+ */
 public class Arpeggiator extends PatternSequencer {
 
     // variables
     //
+
     /** Table of notes on scale */
     protected Scale _scale;
     /** scale index */

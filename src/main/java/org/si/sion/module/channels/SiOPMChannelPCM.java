@@ -489,6 +489,13 @@ public class SiOPMChannelPCM extends SiOPMChannelBase {
     public void resetChannelBufferStatus() {
         _bufferIndex = 0;
 
+        // skip idling check while note is on — MIDI notes with no auto key-off
+        // must keep sounding even when the envelope has decayed past the threshold
+        if (_isNoteOn) {
+            _isIdling = false;
+            return;
+        }
+
         // check idling flag
         _isIdling = operator._eg_out > idlingThreshold && operator._eg_state != SiOPMOperator.EG_ATTACK;
     }
